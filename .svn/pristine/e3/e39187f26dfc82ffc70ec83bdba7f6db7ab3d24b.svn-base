@@ -1,0 +1,93 @@
+import sys,re, pdb, os
+class ClonePair:
+    def __init__(self):
+        self.number = None
+        self.file_names = [None, None]
+        self.positions = [None, None]
+        self.size = None
+        self.distance = None
+    def normalize(self):
+        if (self.file_names[0] < self.file_names[1]) or \
+            ((self.file_names[0] == self.file_names[1]) and \
+                    (self.positions[0] == self.positions[1])):
+            fn = self.file_names[1]
+            self.file_names[1] = self.file_names[0]
+            self.file_names[0] = fn
+            pos = self.positions[0]
+            self.positions[0] = self.positions[1]
+            self.positions[1] = pos
+        assert(self.file_names[1] <= self.file_names[0])
+    def __str__(self):
+        return '%s:%d, %s:%d, %d'%(self.file_names[0], self.positions[0], self.file_names[1], self.positions[1], self.size)
+
+def parse_output(fn):
+    s = """<P><B>Clone # (\d+)</B><BR>Distance between two fragments = (\d+) <BR>Clone size = (\d+)<TABLE NOWRAP WIDTH=100% BORDER=1><TD>Source file "../../../exp/([^"]+)"<BR>The first line is (\d+)</TD><TD></TD><TD>Source file "../../../exp/([^"]+)"<BR>The first line is (\d+)</TD></TR><TR>
+<TD>"""
+    clones = []
+    for a in re.findall(s, open(fn, 'r').read()):
+        clone = ClonePair()
+        clone.number = int(a[0])
+        clone.file_names = [a[3], a[5]]
+        clone.positions = [int(a[4]), int(a[6])]
+        clone.distance = int(a[1])
+        clone.size = int(a[2])
+        clone.normalize()
+        clones.append(clone)
+    return clones
+
+def f(a,b):
+    if a.file_names[0] < b.file_names[0]:
+        return -1
+    if a.file_names[0] > b.file_names[0]:
+        return +1
+    if a.file_names[1] < b.file_names[1]:
+        return -1
+    if a.file_names[1] > b.file_names[1]:
+        return +1
+    if a.positions[0] < b.positions[0]:
+        return -1
+    if a.positions[0] > b.positions[0]:
+        return +1
+    if a.positions[1] < b.positions[1]:
+        return -1
+    if a.positions[1] > b.positions[1]:
+        return +1
+    return 0
+
+def parse_report(fn):
+    clones = []
+    for s in open(fn, 'r').readlines():
+        s = s.strip()
+        p = '^\d+\s+\d+\s+([^\s]+)\s+(\d+)\s+(\d+)\s+([^\s]+)\s+(\d+)\s+(\d+)\s+\d+$'
+        clone = ClonePair()
+        a = re.findall(p, s)[0]
+        clone.file_names = [a[0], a[3]]
+        clone.positions = [int(a[1]), int(a[4])]
+        clone.size = min(int(a[2]) - int(a[1]), int(a[5])-int(a[4])) + 1
+        clone.normalize()
+        clones.append(clone)
+    return clones
+
+if sys.argv[1] == '1':
+    clones = parse_output(sys.argv[2])
+elif sys.argv[1] == '2':
+    clones = parse_report(sys.argv[2])
+else:
+    assert(0)
+if len(sys.argv) == 3:
+    clones.sort(cmp = f)
+    for clone in clones:
+        print clone
+else:
+    assert(sys.argv[3] == 'hystogramm')
+    m = {}
+    for clone in clones:
+        size = clone.size
+        if not m.has_key(size):
+            m[size] = 0
+        m[size] += 1
+    a = m.keys()
+    a.sort(reverse = True)
+    for i in a:
+        print i, '\t:\t', m[i]
+
