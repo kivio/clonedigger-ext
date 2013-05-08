@@ -29,23 +29,25 @@ __docformat__ = "restructuredtext en"
 from os.path import dirname
 
 from clonedigger.logilab.common.modutils import get_module_part, is_relative, \
-     is_standard_module
+    is_standard_module
 
 from clonedigger.logilab import astng
 from clonedigger.logilab.astng.utils import LocalsVisitor
+
 
 class IdGeneratorMixIn:
     """
     Mixin adding the ability to generate integer uid
     """
+
     def __init__(self, start_value=0):
         self.id_count = start_value
-    
+
     def init_counter(self, start_value=0):
         """init the id counter
         """
         self.id_count = start_value
-        
+
     def generate_id(self):
         """generate a new identifer
         """
@@ -75,7 +77,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
     * implements,
       list of implemented interfaces _objects_ (only on astng.Class nodes)
     """
-    
+
     def __init__(self, project, inherited_interfaces=0, tag=False):
         IdGeneratorMixIn.__init__(self)
         LocalsVisitor.__init__(self)
@@ -86,7 +88,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         # visited project
         self.project = project
 
-        
+
     def visit_project(self, node):
         """visit an astng.Project node
         
@@ -96,7 +98,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
             node.uid = self.generate_id()
         for module in node.modules:
             self.visit(module)
-            
+
     def visit_package(self, node):
         """visit an astng.Package node
         
@@ -106,7 +108,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
             node.uid = self.generate_id()
         for subelmt in node.values():
             self.visit(subelmt)
-            
+
     def visit_module(self, node):
         """visit an astng.Module node
         
@@ -120,7 +122,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         node.depends = []
         if self.tag:
             node.uid = self.generate_id()
-    
+
     def visit_class(self, node):
         """visit an astng.Class node
         
@@ -133,22 +135,22 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         node.locals_type = {}
         if self.tag:
             node.uid = self.generate_id()
-        # resolve ancestors
+            # resolve ancestors
         for baseobj in node.ancestors(recurs=False):
             specializations = getattr(baseobj, 'specializations', [])
             specializations.append(node)
             baseobj.specializations = specializations
-        # resolve instance attributes
+            # resolve instance attributes
         node.instance_attrs_type = {}
         for assattrs in node.instance_attrs.values():
             for assattr in assattrs:
                 self.visit_assattr(assattr, node)
-        # resolve implemented interface
+            # resolve implemented interface
         try:
             node.implements = list(node.interfaces(self.inherited_interfaces))
         except TypeError:
             node.implements = ()
-            
+
     def visit_function(self, node):
         """visit an astng.Function node
         
@@ -160,12 +162,12 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         node.locals_type = {}
         if self.tag:
             node.uid = self.generate_id()
-            
+
     link_project = visit_project
     link_module = visit_module
     link_class = visit_class
     link_function = visit_function
-        
+
     def visit_assname(self, node):
         """visit an astng.AssName node
 
@@ -183,7 +185,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
                 frame.locals_type[node.name] = values
         except astng.InferenceError:
             pass
-        
+
     def visit_assattr(self, node, parent):
         """visit an astng.AssAttr node
 
@@ -200,7 +202,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
                 parent.instance_attrs_type[node.attrname] = values
         except astng.InferenceError:
             pass
-            
+
     def visit_import(self, node):
         """visit an astng.Import node
         
@@ -210,7 +212,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         for name in node.names:
             relative = is_relative(name[0], context_file)
             self._imported_module(node, name[0], relative)
-        
+
 
     def visit_from(self, node):
         """visit an astng.From node
@@ -226,7 +228,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         for name in node.names:
             if name[0] == '*':
                 continue
-            # analyze dependancies
+                # analyze dependancies
             fullname = '%s.%s' % (basename, name[0])
             if fullname.find('.') > -1:
                 try:
@@ -237,7 +239,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
             if fullname != basename:
                 self._imported_module(node, fullname, relative)
 
-        
+
     def compute_module(self, context_name, mod_path):
         """return true if the module should be added to dependencies"""
         package_dir = dirname(self.project.path)
@@ -246,7 +248,7 @@ class Linker(IdGeneratorMixIn, LocalsVisitor):
         elif is_standard_module(mod_path, (package_dir,)):
             return 1
         return 0
-    
+
     # protected methods ########################################################
 
     def _imported_module(self, node, mod_path, relative):

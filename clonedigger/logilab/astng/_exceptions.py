@@ -21,21 +21,27 @@
 
 __doctype__ = "restructuredtext en"
 
+
 class ASTNGError(Exception):
     """base exception class for all astng related exceptions
     """
 
+
 class ASTNGBuildingException(ASTNGError):
     """exception class when we are not able to build an astng representation"""
+
 
 class ResolveError(ASTNGError):
     """base class of astng resolution/inference error"""
 
+
 class NotFoundError(ResolveError):
     """raised when we are unabled to resolve a name"""
 
+
 class InferenceError(ResolveError):
     """raised when we are unabled to infer a node"""
+
 
 class UnresolvableName(InferenceError):
     """raised when we are unabled to resolve a name"""
@@ -45,6 +51,7 @@ class NoDefault(ASTNGError):
     """raised by function's `default_value` method when an argument has
     no default value
     """
+
 
 class IgnoreChild(Exception):
     """exception that maybe raised by visit methods to avoid children traversal

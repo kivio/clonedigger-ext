@@ -44,35 +44,37 @@ except NameError:
                 for val in other:
                     result.add(val)
                 return result
+
             __add__ = __or__
-            
+
             def __and__(self, other):
                 result = self.__class__()
                 for val in other:
                     if val in self._data:
                         result.add(val)
                 return result
-            
+
             def __sub__(self, other):
                 result = self.__class__(self._data.keys())
                 for val in other:
                     if val in self._data:
                         result.remove(val)
                 return result
-            
+
             def __cmp__(self, other):
                 keys = self._data.keys()
                 okeys = other._data.keys()
                 keys.sort()
                 okeys.sort()
                 return cmp(keys, okeys)
-            
+
             def __len__(self):
                 return len(self._data)
 
             def __repr__(self):
                 elements = self._data.keys()
                 return 'lcc.%s(%r)' % (self.__class__.__name__, elements)
+
             __str__ = __repr__
 
             def __iter__(self):
@@ -80,10 +82,11 @@ except NameError:
 
         class frozenset(_baseset):
             """immutable set (can be set in dictionnaries)"""
+
             def __init__(self, values=()):
                 super(frozenset, self).__init__(values)
                 self._hashcode = None
-                
+
             def _compute_hash(self):
                 """taken from python stdlib (sets.py)"""
                 # Calculate hash code for a set by xor'ing the hash codes of
@@ -95,16 +98,17 @@ except NameError:
                 for elt in self:
                     result ^= hash(elt)
                 return result
-            
+
             def __hash__(self):
                 """taken from python stdlib (sets.py)"""
                 if self._hashcode is None:
                     self._hashcode = self._compute_hash()
                 return self._hashcode
 
-            
+
         class set(_baseset):
             """mutable set"""
+
             def add(self, value):
                 self._data[value] = 1
 
@@ -123,7 +127,7 @@ except NameError:
         del _baseset # don't explicity provide this class
 
 Set = class_renamed('Set', set, 'logilab.common.compat.Set is deprecated, '
-                    'use logilab.common.compat.set instead')
+                                'use logilab.common.compat.set instead')
 
 try:
     from itertools import izip, chain, imap
@@ -139,7 +143,7 @@ except ImportError:
         for it in iterables:
             for element in it:
                 yield element
-                
+
     def imap(function, *iterables):
         iterables = map(iter, iterables)
         while True:
@@ -147,13 +151,14 @@ except ImportError:
             if function is None:
                 yield tuple(args)
             else:
-                yield function(*args)                
+                yield function(*args)
 try:
     sum = sum
     enumerate = enumerate
 except NameError:
     # define the sum and enumerate functions (builtins introduced in py 2.3)
     import operator
+
     def sum(seq, start=0):
         """Returns the sum of all elements in the sequence"""
         return reduce(operator.add, seq, start)
@@ -164,12 +169,12 @@ except NameError:
         for val in iterable:
             yield i, val
             i += 1
-        #return zip(range(len(iterable)), iterable)
+            #return zip(range(len(iterable)), iterable)
 try:
     sorted = sorted
     reversed = reversed
 except NameError:
-    
+
     def sorted(iterable, cmp=None, key=None, reverse=False):
         original = list(iterable)
         if key:
@@ -182,7 +187,7 @@ except NameError:
         if key:
             return [original[index] for elt, index in l2]
         return l2
-    
+
     def reversed(l):
         l2 = list(l)
         l2.reverse()
@@ -202,7 +207,7 @@ except NameError:
             if elt:
                 return True
         return False
-    
+
     def all(iterable):
         """all(iterable) -> bool
 

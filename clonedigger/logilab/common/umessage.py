@@ -7,7 +7,9 @@ from email.Header import decode_header
 try:
     from mx.DateTime import DateTime
 except ImportError:
-    def DateTime(*args): return None
+    def DateTime(*args):
+        return None
+
 
 def decode_QP(string):
     parts = []
@@ -18,18 +20,21 @@ def decode_QP(string):
 
     return u' '.join(parts)
 
+
 def message_from_file(fd):
     try:
         return UMessage(email.message_from_file(fd))
     except email.Errors.MessageParseError:
         return ''
-    
+
+
 def message_from_string(string):
     try:
         return UMessage(email.message_from_string(string))
     except email.Errors.MessageParseError:
         return ''
-    
+
+
 class UMessage:
     """Encapsulates an email.Message instance and returns only unicode objects"""
 
@@ -37,7 +42,7 @@ class UMessage:
         self.message = message
 
     # email.Message interface #################################################
-    
+
     def get(self, header, default=None):
         value = self.message.get(header, default)
         if value:
@@ -47,7 +52,7 @@ class UMessage:
     def get_all(self, header, default=()):
         return [decode_QP(val) for val in self.message.get_all(header, default)
                 if val is not None]
-    
+
     def get_payload(self, index=None, decode=False):
         message = self.message
         if index is None:
@@ -74,7 +79,7 @@ class UMessage:
     def walk(self):
         for part in self.message.walk():
             yield UMessage(part)
-    
+
     def get_content_maintype(self):
         return unicode(self.message.get_content_maintype())
 
@@ -108,7 +113,7 @@ class UMessage:
             name, mail = parseaddr(person)
             persons.append((name, mail))
         return persons
-    
+
     def date(self):
         """return a mx.DateTime object for the email's date or None if no date is
         set or if it can't be parsed

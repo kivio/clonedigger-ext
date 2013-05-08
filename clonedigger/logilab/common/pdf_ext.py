@@ -29,7 +29,7 @@ with flatten, everything is turned into text.
 
 import os
 
-HEAD="""%FDF-1.2
+HEAD = """%FDF-1.2
 %\xE2\xE3\xCF\xD3
 1 0 obj 
 <<
@@ -38,7 +38,7 @@ HEAD="""%FDF-1.2
 /Fields [
 """
 
-TAIL="""]
+TAIL = """]
 >>
 >>
 endobj 
@@ -50,8 +50,10 @@ trailer
 %%EOF
 """
 
-def output_field( f ):
-    return "\xfe\xff" + "".join( [ "\x00"+c for c in f ] )
+
+def output_field(f):
+    return "\xfe\xff" + "".join(["\x00" + c for c in f])
+
 
 def extract_keys(lines):
     keys = []
@@ -61,24 +63,27 @@ def extract_keys(lines):
         elif line.startswith('/T'):
             key = line[7:-2]
             key = ''.join(key.split('\x00'))
-            keys.append( key )
+            keys.append(key)
     return keys
+
 
 def write_field(out, key, value):
     out.write("<<\n")
     if value:
-        out.write("/V (%s)\n" %value)
+        out.write("/V (%s)\n" % value)
     else:
         out.write("/V /\n")
-    out.write("/T (%s)\n" % output_field(key) )
+    out.write("/T (%s)\n" % output_field(key))
     out.write(">> \n")
+
 
 def write_fields(out, fields):
     out.write(HEAD)
-    for (key,value,comment) in fields:
+    for (key, value, comment) in fields:
         write_field(out, key, value)
-        write_field(out, key+"a", value) # pour copie-carbone sur autres pages
+        write_field(out, key + "a", value) # pour copie-carbone sur autres pages
     out.write(TAIL)
+
 
 def extract_keys_from_pdf(filename):
     # what about using 'pdftk filename dump_data_fields' and parsing the output ?
@@ -91,10 +96,11 @@ def fill_pdf(infile, outfile, fields):
     write_fields(file('/tmp/toto.fdf', 'w'), fields)
     os.system('pdftk %s fill_form /tmp/toto.fdf output %s flatten' % (infile, outfile))
 
+
 def testfill_pdf(infile, outfile):
     keys = extract_keys_from_pdf(infile)
     fields = []
     for key in keys:
-        fields.append( (key, key, '') )
+        fields.append((key, key, ''))
     fill_pdf(infile, outfile, fields)
 

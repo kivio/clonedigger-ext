@@ -23,7 +23,6 @@ from __future__ import generators
 
 import sys
 from os import linesep
-from cStringIO import StringIO
 from StringIO import StringIO as UStringIO
 
 
@@ -32,17 +31,19 @@ def get_nodes(node, klass):
     for child in node.children:
         if isinstance(child, klass):
             yield child
-        # recurse (FIXME: recursion controled by an option)
+            # recurse (FIXME: recursion controled by an option)
         for grandchild in get_nodes(child, klass):
             yield grandchild
-            
+
+
 def layout_title(layout):
     """try to return the layout's title as string, return None if not found
     """
     for child in layout.children:
         if isinstance(child, Title):
             return ' '.join([node.data for node in get_nodes(child, Text)])
-            
+
+
 def build_summary(layout, level=1):
     """make a summary for the report, including X level"""
     assert level > 0
@@ -56,7 +57,7 @@ def build_summary(layout, level=1):
             continue
         if not child.id:
             child.id = label.replace(' ', '-')
-        node = Link('#'+child.id, label=label or child.id)
+        node = Link('#' + child.id, label=label or child.id)
         # FIXME: Three following lines produce not very compliant
         # docbook: there are some useless <para><para>. They might be
         # replaced by the three commented lines but this then produces
@@ -64,15 +65,15 @@ def build_summary(layout, level=1):
         if level and [n for n in child.children if isinstance(n, Section)]:
             node = Paragraph([node, build_summary(child, level)])
         summary.append(node)
-#         summary.append(node)
-#         if level and [n for n in child.children if isinstance(n, Section)]:
-#             summary.append(build_summary(child, level))
+    #         summary.append(node)
+    #         if level and [n for n in child.children if isinstance(n, Section)]:
+    #             summary.append(build_summary(child, level))
     return summary
 
 
 class BaseWriter(object):
     """base class for ureport writers"""
-    
+
     def format(self, layout, stream=None, encoding=None):
         """format and write the given layout into the stream object
 
@@ -90,7 +91,7 @@ class BaseWriter(object):
         self.begin_format(layout)
         layout.accept(self)
         self.end_format(layout)
-        
+
     def format_children(self, layout):
         """recurse on the layout children and call their accept method
         (see the Visitor pattern)
@@ -112,7 +113,7 @@ class BaseWriter(object):
     def begin_format(self, layout):
         """begin to format a layout"""
         self.section = 0
-        
+
     def end_format(self, layout):
         """finished to format a layout"""
 
@@ -129,7 +130,7 @@ class BaseWriter(object):
                 cols = table.cols
             cols -= 1
             result[-1].append(cell)
-        # fill missing cells
+            # fill missing cells
         while len(result[-1]) < cols:
             result[-1].append('')
         return result
@@ -146,11 +147,13 @@ class BaseWriter(object):
                 stream.write(data)
             except UnicodeEncodeError:
                 stream.write(data.encode(self.encoding))
+
         def writeln(data=''):
             try:
-                stream.write(data+linesep)
+                stream.write(data + linesep)
             except UnicodeEncodeError:
-                stream.write(data.encode(self.encoding)+linesep)
+                stream.write(data.encode(self.encoding) + linesep)
+
         self.write = write
         self.writeln = writeln
         self.__compute_funcs.append((write, writeln))

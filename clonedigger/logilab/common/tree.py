@@ -19,13 +19,13 @@
 
 import sys
 
-from clonedigger.logilab.common import flatten
 from clonedigger.logilab.common.visitor import VisitedMixIn, FilteredIterator, no_filter
 
 ## Exceptions #################################################################
 
 class NodeNotFound(Exception):
     """raised when a node has not been found"""
+
 
 EX_SIBLING_NOT_FOUND = "No such sibling as '%s'"
 EX_CHILD_NOT_FOUND = "No such child as '%s'"
@@ -37,14 +37,14 @@ EX_NODE_NOT_FOUND = "No such node as '%s'"
 class Node(object):
     """a basic tree node, caracterised by an id"""
 
-    def __init__(self, nid=None) :
+    def __init__(self, nid=None):
         self.id = nid
         # navigation
         self.parent = None
         self.children = []
 
     def __str__(self, indent=0):
-        s = ['%s%s %s' % (' '*indent, self.__class__.__name__, self.id)]
+        s = ['%s%s %s' % (' ' * indent, self.__class__.__name__, self.id)]
         indent += 2
         for child in self.children:
             try:
@@ -56,7 +56,7 @@ class Node(object):
 
     def is_leaf(self):
         return not self.children
-    
+
     def append(self, child):
         """add a node to children"""
         self.children.append(child)
@@ -71,7 +71,7 @@ class Node(object):
         """insert a child node"""
         self.children.insert(index, child)
         child.parent = self
-        
+
     def replace(self, old_child, new_child):
         """replace a child node with another"""
         i = self.children.index(old_child)
@@ -83,7 +83,7 @@ class Node(object):
         """return the sibling node that has given id"""
         try:
             return self.parent.get_child_by_id(nid)
-        except NodeNotFound :
+        except NodeNotFound:
             raise NodeNotFound(EX_SIBLING_NOT_FOUND % nid)
 
     def next_sibling(self):
@@ -96,10 +96,10 @@ class Node(object):
             return None
         index = parent.children.index(self)
         try:
-            return parent.children[index+1]
+            return parent.children[index + 1]
         except IndexError:
             return None
-        
+
     def previous_sibling(self):
         """
         return the previous sibling for this node if any
@@ -110,7 +110,7 @@ class Node(object):
             return None
         index = parent.children.index(self)
         if index > 0:
-            return parent.children[index-1]
+            return parent.children[index - 1]
         return None
 
     def get_node_by_id(self, nid):
@@ -120,22 +120,22 @@ class Node(object):
         root = self.root()
         try:
             return root.get_child_by_id(nid, 1)
-        except NodeNotFound :
+        except NodeNotFound:
             raise NodeNotFound(EX_NODE_NOT_FOUND % nid)
-        
+
     def get_child_by_id(self, nid, recurse=None):
         """
         return child of given id
         """
         if self.id == nid:
             return self
-        for c in self.children :
+        for c in self.children:
             if recurse:
                 try:
                     return c.get_child_by_id(nid, 1)
-                except NodeNotFound :
+                except NodeNotFound:
                     continue
-            if c.id == nid :
+            if c.id == nid:
                 return c
         raise NodeNotFound(EX_CHILD_NOT_FOUND % nid)
 
@@ -144,13 +144,13 @@ class Node(object):
         return child of given path (path is a list of ids)
         """
         if len(path) > 0 and path[0] == self.id:
-            if len(path) == 1 :
+            if len(path) == 1:
                 return self
-            else :
-                for c in self.children :
+            else:
+                for c in self.children:
                     try:
                         return c.get_child_by_path(path[1:])
-                    except NodeNotFound :
+                    except NodeNotFound:
                         pass
         raise NodeNotFound(EX_CHILD_NOT_FOUND % path)
 
@@ -160,7 +160,7 @@ class Node(object):
         """
         if self.parent is not None:
             return 1 + self.parent.depth()
-        else :
+        else:
             return 0
 
     def depth_down(self):
@@ -176,7 +176,7 @@ class Node(object):
         return the width of the tree from this node
         """
         return len(self.leaves())
-        
+
     def root(self):
         """
         return the root node of the tree
@@ -199,7 +199,7 @@ class Node(object):
 
     def __iter__(self):
         return iter(self.children)
-    
+
     def flatten(self, _list=None):
         """
         return a list with all the nodes descendant from this node
@@ -219,70 +219,74 @@ class Node(object):
         if self.parent is not None:
             lst.extend(self.parent.lineage())
         return lst
-    
+
+
 class VNode(Node, VisitedMixIn):
     """a visitable node
     """
     pass
 
-            
+
 class BinaryNode(VNode):
     """a binary node (ie only two children
     """
-    def __init__(self, lhs=None, rhs=None) :
+
+    def __init__(self, lhs=None, rhs=None):
         VNode.__init__(self)
         if lhs is not None or rhs is not None:
             assert lhs and rhs
             self.append(lhs)
             self.append(rhs)
-            
+
     def remove(self, child):
         """remove the child and replace this node with the other child
         """
         self.children.remove(child)
         self.parent.replace(self, self.children[0])
-        
+
     def get_parts(self):
         """
         return the left hand side and the right hand side of this node
         """
         return self.children[0], self.children[1]
-        
 
 
 if sys.version_info[0:2] >= (2, 2):
     list_class = list
 else:
     from UserList import UserList
+
     list_class = UserList
-    
+
+
 class ListNode(VNode, list_class):
     """Used to manipulate Nodes as Lists
     """
+
     def __init__(self):
         list_class.__init__(self)
         VNode.__init__(self)
         self.children = self
-        
+
     def __str__(self, indent=0):
-        return '%s%s %s' % (indent*' ', self.__class__.__name__,
+        return '%s%s %s' % (indent * ' ', self.__class__.__name__,
                             ', '.join([str(v) for v in self]))
 
     def append(self, child):
         """add a node to children"""
         list_class.append(self, child)
         child.parent = self
- 
+
     def insert(self, index, child):
         """add a node to children"""
         list_class.insert(self, index, child)
         child.parent = self
-    
+
     def remove(self, child):
         """add a node to children"""
         list_class.remove(self, child)
         child.parent = None
- 
+
     def pop(self, index):
         """add a node to children"""
         child = list_class.pop(self, index)
@@ -321,6 +325,7 @@ def post_order_list(node, filter_func=no_filter):
             poped = 1
     return l
 
+
 def pre_order_list(node, filter_func=no_filter):
     """
     create a list with tree nodes for which the <filter> function returned true
@@ -350,15 +355,19 @@ def pre_order_list(node, filter_func=no_filter):
             poped = 1
     return l
 
+
 class PostfixedDepthFirstIterator(FilteredIterator):
     """a postfixed depth first iterator, designed to be used with visitors
     """
+
     def __init__(self, node, filter_func=None):
         FilteredIterator.__init__(self, node, post_order_list, filter_func)
+
 
 class PrefixedDepthFirstIterator(FilteredIterator):
     """a pretfixed depth first iterator, designed to be used with visitors
     """
+
     def __init__(self, node, filter_func=None):
         FilteredIterator.__init__(self, node, pre_order_list, filter_func)
         

@@ -45,27 +45,31 @@ from __future__ import generators
 __docformat__ = "restructuredtext en"
 
 from compiler.ast import Assign, Add, And, AssAttr, AssList, AssName, \
-     AssTuple, Assert, Assign, AugAssign, \
-     Backquote, Bitand, Bitor, Bitxor, Break, CallFunc, Class, \
-     Compare, Const, Continue, Dict, Discard, Div, FloorDiv, \
-     Ellipsis, EmptyNode, Exec, \
-     For, From, Function, Getattr, Global, \
-     If, Import, Invert, Keyword, Lambda, LeftShift, \
-     List, ListComp, ListCompFor, ListCompIf, Mod, Module, Mul, Name, Node, \
-     Not, Or, Pass, Power, Print, Printnl, Raise, Return, RightShift, Slice, \
-     Sliceobj, Stmt, Sub, Subscript, TryExcept, TryFinally, Tuple, UnaryAdd, \
-     UnarySub, While, Yield
+    AssTuple, Assert, Assign, AugAssign, \
+    Backquote, Bitand, Bitor, Bitxor, Break, CallFunc, Class, \
+    Compare, Const, Continue, Dict, Discard, Div, FloorDiv, \
+    Ellipsis, EmptyNode, Exec, \
+    For, From, Function, Getattr, Global, \
+    If, Import, Invert, Keyword, Lambda, LeftShift, \
+    List, ListComp, ListCompFor, ListCompIf, Mod, Module, Mul, Name, Node, \
+    Not, Or, Pass, Power, Print, Printnl, Raise, Return, RightShift, Slice, \
+    Sliceobj, Stmt, Sub, Subscript, TryExcept, TryFinally, Tuple, UnaryAdd, \
+    UnarySub, While, Yield
+
 try:
     # introduced in python 2.4
     from compiler.ast import GenExpr, GenExprFor, GenExprIf, GenExprInner
 except:
     class GenExpr:
         """dummy GenExpr node, shouldn't be used since py < 2.4"""
-    class GenExprFor: 
+
+    class GenExprFor:
         """dummy GenExprFor node, shouldn't be used since py < 2.4"""
-    class GenExprIf: 
+
+    class GenExprIf:
         """dummy GenExprIf node, shouldn't be used since py < 2.4"""
-    class GenExprInner: 
+
+    class GenExprInner:
         """dummy GenExprInner node, shouldn't be used since py < 2.4"""
 
 try:
@@ -87,6 +91,7 @@ from clonedigger.logilab.astng.utils import extend_class
 from clonedigger.logilab.astng import InferenceContext
 
 import re
+
 ID_RGX = re.compile('^[a-zA-Z_][a-zA-Z_0-9]*$')
 del re
 
@@ -100,7 +105,7 @@ class NodeNG:
     original class from the compiler.ast module using its dictionnary
     (see below the class definition)
     """
-    
+
     # attributes below are set by the builder module or by raw factories
     fromlineno = None
     tolineno = None
@@ -109,7 +114,7 @@ class NodeNG:
 
     def __str__(self):
         return '%s(%s)' % (self.__class__.__name__, getattr(self, 'name', ''))
-    
+
     def parent_of(self, node):
         """return true if i'm a parent of the given node"""
         parent = node.parent
@@ -154,22 +159,22 @@ class NodeNG:
     def next_sibling(self):
         """return the previous sibling statement 
         """
-        while not self.is_statement(): 
+        while not self.is_statement():
             self = self.parent
         index = self.parent.nodes.index(self)
         try:
-            return self.parent.nodes[index+1]
+            return self.parent.nodes[index + 1]
         except IndexError:
             return
 
     def previous_sibling(self):
         """return the next sibling statement 
         """
-        while not self.is_statement(): 
+        while not self.is_statement():
             self = self.parent
         index = self.parent.nodes.index(self)
         if index > 0:
-            return self.parent.nodes[index-1]
+            return self.parent.nodes[index - 1]
         return
 
     def nearest(self, nodes):
@@ -181,15 +186,15 @@ class NodeNG:
         nearest = None, 0
         for node in nodes:
             assert node.root() is myroot, \
-                   'not from the same module %s' % (self, node)
+                'not from the same module %s' % (self, node)
             lineno = node.source_line()
             if node.source_line() > mylineno:
                 break
             if lineno > nearest[1]:
                 nearest = node, lineno
-        # FIXME: raise an exception if nearest is None ?
+            # FIXME: raise an exception if nearest is None ?
         return nearest[0]
-    
+
     def source_line(self):
         """return the line number where the given node appears
 
@@ -210,7 +215,7 @@ class NodeNG:
                     _node = _node.parent
             self.lineno = line
         return line
-    
+
     def last_source_line(self):
         """return the last block line number for this node (i.e. including
         children)
@@ -250,20 +255,24 @@ class NodeNG:
 
     def _infer_name(self, frame, name):
         if isinstance(self, INFER_NEED_NAME_STMTS) or (
-                 isinstance(self, (Function, Lambda)) and self is frame):
+                isinstance(self, (Function, Lambda)) and self is frame):
             return name
         return None
 
     def eq(self, value):
         return False
-    
+
+
 extend_class(Node, NodeNG)
 
 Const.eq = lambda self, value: self.value == value
 
+
 def decorators_scope(self):
     # skip the function node to go directly to the upper level scope
     return self.parent.parent.scope()
+
+
 Decorators.scope = decorators_scope
 
 # block range overrides #######################################################
@@ -275,9 +284,11 @@ def object_block_range(node, lineno):
     """
     return node.source_line(), node.last_source_line()
 
+
 Function.block_range = object_block_range
 Class.block_range = object_block_range
 Module.block_range = object_block_range
+
 
 def if_block_range(node, lineno):
     """handle block line numbers range for if/elif statements
@@ -292,7 +303,9 @@ def if_block_range(node, lineno):
             last = testbody.source_line() - 1
     return elsed_block_range(node, lineno, last)
 
+
 If.block_range = if_block_range
+
 
 def try_except_block_range(node, lineno):
     """handle block line numbers range for try/except statements
@@ -307,7 +320,9 @@ def try_except_block_range(node, lineno):
             last = exbody.source_line() - 1
     return elsed_block_range(node, lineno, last)
 
+
 TryExcept.block_range = try_except_block_range
+
 
 def elsed_block_range(node, lineno, last=None):
     """handle block line numbers range for try/finally, for and while
@@ -320,6 +335,7 @@ def elsed_block_range(node, lineno, last=None):
             return lineno, node.else_.last_source_line()
         return lineno, node.else_.source_line() - 1
     return lineno, last or node.last_source_line()
+
 
 TryFinally.block_range = elsed_block_range
 While.block_range = elsed_block_range
@@ -340,14 +356,18 @@ def real_name(node, asname):
         if asname == _asname:
             return name
     raise NotFoundError(asname)
-    
+
+
 From.real_name = real_name
 Import.real_name = real_name
+
 
 def infer_name_module(node, name):
     context = InferenceContext(node)
     context.lookupname = name
     return node.infer(context, asname=False)
+
+
 Import.infer_name_module = infer_name_module
 
 # as_string ###################################################################
@@ -355,82 +375,124 @@ Import.infer_name_module = infer_name_module
 def add_as_string(node):
     """return an ast.Add node as string"""
     return '(%s) + (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Add.as_string = add_as_string
+
 
 def and_as_string(node):
     """return an ast.And node as string"""
     return ' and '.join(['(%s)' % n.as_string() for n in node.nodes])
+
+
 And.as_string = and_as_string
-    
+
+
 def assattr_as_string(node):
     """return an ast.AssAttr node as string"""
     if node.flags == 'OP_DELETE':
         return 'del %s.%s' % (node.expr.as_string(), node.attrname.as_string())
     return '%s.%s' % (node.expr.as_string(), node.attrname.as_string())
+
+
 AssAttr.as_string = assattr_as_string
+
 
 def asslist_as_string(node):
     """return an ast.AssList node as string"""
     string = ', '.join([n.as_string() for n in node.nodes])
     return '[%s]' % string
+
+
 AssList.as_string = asslist_as_string
+
 
 def assname_as_string(node):
     """return an ast.AssName node as string"""
     if node.flags == 'OP_DELETE':
         return 'del %s' % node.name.as_string()
     return node.name.as_string()
+
+
 AssName.as_string = assname_as_string
-    
+
+
 def asstuple_as_string(node):
     """return an ast.AssTuple node as string"""
     string = ', '.join([n.as_string() for n in node.nodes])
     # fix for del statement
     return string.replace(', del ', ', ')
+
+
 AssTuple.as_string = asstuple_as_string
+
 
 def assert_as_string(node):
     """return an ast.Assert node as string"""
     if node.fail:
         return 'assert %s, %s' % (node.test.as_string(), node.fail.as_string())
     return 'assert %s' % node.test.as_string()
+
+
 Assert.as_string = assert_as_string
+
 
 def assign_as_string(node):
     """return an ast.Assign node as string"""
     lhs = ' = '.join([n.as_string() for n in node.nodes])
     return '%s = %s' % (lhs, node.expr.as_string())
+
+
 Assign.as_string = assign_as_string
+
 
 def augassign_as_string(node):
     """return an ast.AugAssign node as string"""
     return '%s %s %s' % (node.node.as_string(), node.op.as_string(), node.expr.as_string())
+
+
 AugAssign.as_string = augassign_as_string
+
 
 def backquote_as_string(node):
     """return an ast.Backquote node as string"""
     return '`%s`' % node.expr.as_string()
+
+
 Backquote.as_string = backquote_as_string
+
 
 def bitand_as_string(node):
     """return an ast.Bitand node as string"""
     return ' & '.join(['(%s)' % n.as_string() for n in node.nodes])
+
+
 Bitand.as_string = bitand_as_string
+
 
 def bitor_as_string(node):
     """return an ast.Bitor node as string"""
     return ' | '.join(['(%s)' % n.as_string() for n in node.nodes])
+
+
 Bitor.as_string = bitor_as_string
+
 
 def bitxor_as_string(node):
     """return an ast.Bitxor node as string"""
     return ' ^ '.join(['(%s)' % n.as_string() for n in node.nodes])
+
+
 Bitxor.as_string = bitxor_as_string
+
 
 def break_as_string(node):
     """return an ast.Break node as string"""
     return 'break'
+
+
 Break.as_string = break_as_string
+
 
 def callfunc_as_string(node):
     """return an ast.CallFunc node as string"""
@@ -441,63 +503,96 @@ def callfunc_as_string(node):
     if node.dstar_args:
         args += ', **%s' % node.dstar_args.as_string()
     return '%s(%s)' % (expr_str, args)
+
+
 CallFunc.as_string = callfunc_as_string
+
 
 def class_as_string(node):
     """return an ast.Class node as string"""
-    bases =  ', '.join([n.as_string() for n in node.bases])
+    bases = ', '.join([n.as_string() for n in node.bases])
     bases = bases and '(%s)' % bases or ''
     docs = node.doc and '\n    """%s"""' % node.doc or ''
     return 'class %s%s:%s\n    %s\n' % (node.name.as_string(), bases, docs,
                                         node.code.as_string())
+
+
 Class.as_string = class_as_string
+
 
 def compare_as_string(node):
     """return an ast.Compare node as string"""
     rhs_str = ' '.join(['%s %s' % (op.as_string(), expr.as_string())
                         for op, expr in node.ops])
     return '%s %s' % (node.expr.as_string(), rhs_str)
+
+
 Compare.as_string = compare_as_string
+
 
 def const_as_string(node):
     """return an ast.Const node as string"""
     return node.value.as_string()
+
+
 Const.as_string = const_as_string
+
 
 def continue_as_string(node):
     """return an ast.Continue node as string"""
     return 'continue'
+
+
 Continue.as_string = continue_as_string
+
 
 def dict_as_string(node):
     """return an ast.Dict node as string"""
     return '{%s}' % ', '.join(['%s: %s' % (key.as_string(), value.as_string())
                                for key, value in node.items])
+
+
 Dict.as_string = dict_as_string
+
 
 def discard_as_string(node):
     """return an ast.Discard node as string"""
     return node.expr.as_string()
+
+
 Discard.as_string = discard_as_string
+
 
 def div_as_string(node):
     """return an ast.Div node as string"""
     return '(%s) / (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Div.as_string = div_as_string
+
 
 def floordiv_as_string(node):
     """return an ast.Div node as string"""
     return '(%s) // (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 FloorDiv.as_string = floordiv_as_string
+
 
 def ellipsis_as_string(node):
     """return an ast.Ellipsis node as string"""
     return '...'
+
+
 Ellipsis.as_string = ellipsis_as_string
+
 
 def empty_as_string(node):
     return ''
+
+
 EmptyNode.as_string = empty_as_string
+
 
 def exec_as_string(node):
     """return an ast.Exec node as string"""
@@ -509,7 +604,10 @@ def exec_as_string(node):
         return 'exec %s in %s' % (node.expr.as_string(),
                                   node.locals.as_string())
     return 'exec %s' % node.expr.as_string()
+
+
 Exec.as_string = exec_as_string
+
 
 def for_as_string(node):
     """return an ast.For node as string"""
@@ -519,12 +617,18 @@ def for_as_string(node):
     if node.else_:
         fors = '%s\nelse:\n    %s' % (fors, node.else_.as_string())
     return fors
+
+
 For.as_string = for_as_string
+
 
 def from_as_string(node):
     """return an ast.From node as string"""
     return 'from %s import %s' % (node.modname, _import_string(node.names))
+
+
 From.as_string = from_as_string
+
 
 def function_as_string(node):
     """return an ast.Function node as string"""
@@ -532,40 +636,61 @@ def function_as_string(node):
     docs = node.doc and '\n    """%s"""' % node.doc or ''
     return 'def %s(%s):%s\n    %s' % (node.name, fargs, docs,
                                       node.code.as_string())
+
+
 Function.as_string = function_as_string
+
 
 def genexpr_as_string(node):
     """return an ast.GenExpr node as string"""
     return '(%s)' % node.code.as_string()
+
+
 GenExpr.as_string = genexpr_as_string
+
 
 def genexprinner_as_string(node):
     """return an ast.GenExpr node as string"""
     return '%s %s' % (node.expr.as_string(), ' '.join([n.as_string()
                                                        for n in node.quals]))
+
+
 GenExprInner.as_string = genexprinner_as_string
+
 
 def genexprfor_as_string(node):
     """return an ast.GenExprFor node as string"""
     return 'for %s in %s %s' % (node.assign.as_string(),
                                 node.iter.as_string(),
                                 ' '.join([n.as_string() for n in node.ifs]))
+
+
 GenExprFor.as_string = genexprfor_as_string
+
 
 def genexprif_as_string(node):
     """return an ast.GenExprIf node as string"""
     return 'if %s' % node.test.as_string()
+
+
 GenExprIf.as_string = genexprif_as_string
+
 
 def getattr_as_string(node):
     """return an ast.Getattr node as string"""
     return '%s.%s' % (node.expr.as_string(), node.attrname.as_string())
+
+
 Getattr.as_string = getattr_as_string
+
 
 def global_as_string(node):
     """return an ast.Global node as string"""
     return 'global %s' % ', '.join([name.as_string() for name in node.names])
+
+
 Global.as_string = global_as_string
+
 
 def if_as_string(node):
     """return an ast.If node as string"""
@@ -576,96 +701,150 @@ def if_as_string(node):
     if node.else_:
         ifs.append('else:\n    %s' % node.else_.as_string())
     return '\n'.join(ifs)
+
+
 If.as_string = if_as_string
+
 
 def import_as_string(node):
     """return an ast.Import node as string"""
     return 'import %s' % _import_string(node.names)
+
+
 Import.as_string = import_as_string
+
 
 def invert_as_string(node):
     """return an ast.Invert node as string"""
     return '~%s' % node.expr.as_string()
+
+
 Invert.as_string = invert_as_string
+
 
 def keyword_as_string(node):
     """return an ast.Keyword node as string"""
     return '%s=%s' % (node.name.as_string(), node.expr.as_string())
+
+
 Keyword.as_string = keyword_as_string
+
 
 def lambda_as_string(node):
     """return an ast.Lambda node as string"""
     return 'lambda %s: %s' % (node.format_args(), node.code.as_string())
+
+
 Lambda.as_string = lambda_as_string
+
 
 def leftshift_as_string(node):
     """return an ast.LeftShift node as string"""
     return '(%s) << (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 LeftShift.as_string = leftshift_as_string
+
 
 def list_as_string(node):
     """return an ast.List node as string"""
     return '[%s]' % ', '.join([child.as_string() for child in node.nodes])
+
+
 List.as_string = list_as_string
+
 
 def listcomp_as_string(node):
     """return an ast.ListComp node as string"""
     return '[%s %s]' % (node.expr.as_string(), ' '.join([n.as_string()
                                                          for n in node.quals]))
+
+
 ListComp.as_string = listcomp_as_string
+
 
 def listcompfor_as_string(node):
     """return an ast.ListCompFor node as string"""
     return 'for %s in %s %s' % (node.assign.as_string(),
                                 node.list.as_string(),
                                 ' '.join([n.as_string() for n in node.ifs]))
+
+
 ListCompFor.as_string = listcompfor_as_string
+
 
 def listcompif_as_string(node):
     """return an ast.ListCompIf node as string"""
     return 'if %s' % node.test.as_string()
+
+
 ListCompIf.as_string = listcompif_as_string
+
 
 def mod_as_string(node):
     """return an ast.Mod node as string"""
     return '(%s) %% (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Mod.as_string = mod_as_string
+
 
 def module_as_string(node):
     """return an ast.Module node as string"""
     docs = node.doc and '"""%s"""\n' % node.doc or ''
     return '%s%s' % (docs, node.node.as_string())
+
+
 Module.as_string = module_as_string
+
 
 def mul_as_string(node):
     """return an ast.Mul node as string"""
     return '(%s) * (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Mul.as_string = mul_as_string
+
 
 def name_as_string(node):
     """return an ast.Name node as string"""
     return node.name.as_string()
+
+
 Name.as_string = name_as_string
+
 
 def not_as_string(node):
     """return an ast.Not node as string"""
     return 'not %s' % node.expr.as_string()
+
+
 Not.as_string = not_as_string
+
 
 def or_as_string(node):
     """return an ast.Or node as string"""
     return ' or '.join(['(%s)' % n.as_string() for n in node.nodes])
+
+
 Or.as_string = or_as_string
+
 
 def pass_as_string(node):
     """return an ast.Pass node as string"""
     return 'pass'
+
+
 Pass.as_string = pass_as_string
+
 
 def power_as_string(node):
     """return an ast.Power node as string"""
     return '(%s) ** (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Power.as_string = power_as_string
+
 
 def print_as_string(node):
     """return an ast.Print node as string"""
@@ -673,7 +852,10 @@ def print_as_string(node):
     if node.dest:
         return 'print >> %s, %s,' % (node.dest.as_string(), nodes)
     return 'print %s,' % nodes
+
+
 Print.as_string = print_as_string
+
 
 def printnl_as_string(node):
     """return an ast.Printnl node as string"""
@@ -681,7 +863,10 @@ def printnl_as_string(node):
     if node.dest:
         return 'print >> %s, %s' % (node.dest.as_string(), nodes)
     return 'print %s' % nodes
+
+
 Printnl.as_string = printnl_as_string
+
 
 def raise_as_string(node):
     """return an ast.Raise node as string"""
@@ -695,17 +880,26 @@ def raise_as_string(node):
                                      node.expr2.as_string())
         return 'raise %s' % node.expr1.as_string()
     return 'raise'
+
+
 Raise.as_string = raise_as_string
+
 
 def return_as_string(node):
     """return an ast.Return node as string"""
     return 'return %s' % node.value.as_string()
+
+
 Return.as_string = return_as_string
+
 
 def rightshift_as_string(node):
     """return an ast.RightShift node as string"""
     return '(%s) >> (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 RightShift.as_string = rightshift_as_string
+
 
 def slice_as_string(node):
     """return an ast.Slice node as string"""
@@ -713,12 +907,18 @@ def slice_as_string(node):
     lower = node.lower and node.lower.as_string() or ''
     upper = node.upper and node.upper.as_string() or ''
     return '%s[%s:%s]' % (node.expr.as_string(), lower, upper)
+
+
 Slice.as_string = slice_as_string
+
 
 def sliceobj_as_string(node):
     """return an ast.Sliceobj node as string"""
     return ':'.join([n.as_string() for n in node.nodes])
+
+
 Sliceobj.as_string = sliceobj_as_string
+
 
 def stmt_as_string(node):
     """return an ast.Stmt node as string"""
@@ -726,19 +926,28 @@ def stmt_as_string(node):
     if isinstance(node.parent, Module):
         return stmts
     return stmts.replace('\n', '\n    ')
+
+
 Stmt.as_string = stmt_as_string
+
 
 def sub_as_string(node):
     """return an ast.Sub node as string"""
     return '(%s) - (%s)' % (node.left.as_string(), node.right.as_string())
+
+
 Sub.as_string = sub_as_string
+
 
 def subscript_as_string(node):
     """return an ast.Subscript node as string"""
     # FIXME: flags ?
     return '%s[%s]' % (node.expr.as_string(), ','.join([n.as_string()
                                                         for n in node.subs]))
+
+
 Subscript.as_string = subscript_as_string
+
 
 def tryexcept_as_string(node):
     """return an ast.TryExcept node as string"""
@@ -754,28 +963,43 @@ def tryexcept_as_string(node):
             excs = 'except'
         trys.append('%s:\n    %s' % (excs, body.as_string()))
     return '\n'.join(trys)
+
+
 TryExcept.as_string = tryexcept_as_string
+
 
 def tryfinally_as_string(node):
     """return an ast.TryFinally node as string"""
     return 'try:\n    %s\nfinally:\n    %s' % (node.body.as_string(),
                                                node.final.as_string())
+
+
 TryFinally.as_string = tryfinally_as_string
+
 
 def tuple_as_string(node):
     """return an ast.Tuple node as string"""
     return '(%s)' % ', '.join([child.as_string() for child in node.nodes])
+
+
 Tuple.as_string = tuple_as_string
+
 
 def unaryadd_as_string(node):
     """return an ast.UnaryAdd node as string"""
     return '+%s' % node.expr.as_string()
+
+
 UnaryAdd.as_string = unaryadd_as_string
+
 
 def unarysub_as_string(node):
     """return an ast.UnarySub node as string"""
     return '-%s' % node.expr.as_string()
+
+
 UnarySub.as_string = unarysub_as_string
+
 
 def while_as_string(node):
     """return an ast.While node as string"""
@@ -784,19 +1008,27 @@ def while_as_string(node):
     if node.else_:
         whiles = '%s\nelse:\n    %s' % (whiles, node.else_.as_string())
     return whiles
+
+
 While.as_string = while_as_string
+
 
 def with_as_string(node):
     """return an ast.With node as string"""
     withs = 'with (%s) as (%s):\n    %s' % (node.expr.as_string(),
-                                      node.vars.as_string(),
-                                      node.body.as_string())
+                                            node.vars.as_string(),
+                                            node.body.as_string())
     return withs
+
+
 With.as_string = with_as_string
+
 
 def yield_as_string(node):
     """yield an ast.Yield node as string"""
     return 'yield %s' % node.value.as_string()
+
+
 Yield.as_string = yield_as_string
 
 
@@ -809,7 +1041,7 @@ def _import_string(names):
             _names.append('%s as %s' % (name, asname))
         else:
             _names.append(name)
-    return  ', '.join(_names)
+    return ', '.join(_names)
 
 # to backport into compiler ###################################################
 

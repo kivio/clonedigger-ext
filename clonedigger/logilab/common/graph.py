@@ -13,11 +13,13 @@ __metaclass__ = type
 import os.path as osp
 import os
 
+
 def escape(value):
     """make <value> usable in a dot file"""
     lines = [line.replace('"', '\\"') for line in value.split('\n')]
     data = '\\l'.join(lines)
     return '\\n' + data
+
 
 def target_info_from_filename(filename):
     """transforms /some/path/foo.png into ('/some/path', 'foo.png', 'png')"""
@@ -30,6 +32,7 @@ def target_info_from_filename(filename):
 
 class DotBackend:
     """Dot File backend"""
+
     def __init__(self, graphname, rankdir=None, size=None, ratio=None, charset='utf-8'):
         self.graphname = graphname
         self.lines = []
@@ -43,7 +46,7 @@ class DotBackend:
             self.emit('size="%s"' % size)
         if charset:
             assert charset.lower() in ('utf-8', 'iso-8859-1', 'latin1'), \
-                   'unsupported charset %s' % charset
+                'unsupported charset %s' % charset
             self.emit('charset="%s"' % charset)
 
     def get_source(self):
@@ -55,7 +58,7 @@ class DotBackend:
         return self._source
 
     source = property(get_source)
-    
+
     def generate(self, outputfile=None, dotfile=None):
         """generates a graph file
         :param target: output format ('png', 'ps', etc.). If None,
@@ -101,9 +104,11 @@ class DotBackend:
         attrs = ['%s="%s"' % (prop, value) for prop, value in props.items()]
         self.emit('%s [%s];' % (normalize_node_id(name), ", ".join(attrs)))
 
+
 def normalize_node_id(nid):
     """returns a suitable DOT node id for `nid`"""
     return '"%s"' % nid
+
 
 class GraphGenerator:
     def __init__(self, backend):
@@ -124,7 +129,6 @@ class GraphGenerator:
         return self.backend.generate(outputfile)
 
 
-
 def get_cycles(graph_dict, vertices=None):
     '''given a dictionnary representing an ordered graph (i.e. key are vertices
     and values is a list of destination vertices representing edges), return a
@@ -139,16 +143,17 @@ def get_cycles(graph_dict, vertices=None):
         _get_cycles(graph_dict, vertice, [], result)
     return result
 
+
 def _get_cycles(graph_dict, vertice=None, path=None, result=None):
     """recursive function doing the real work for get_cycles"""
     if vertice in path:
         cycle = [vertice]
-        for i in range(len(path)-1, 0, -1):
+        for i in range(len(path) - 1, 0, -1):
             node = path[i]
             if node == vertice:
                 break
             cycle.insert(0, node)
-        # make a canonical representation
+            # make a canonical representation
         start_from = min(cycle)
         index = cycle.index(start_from)
         cycle = cycle[index:] + cycle[0:index]

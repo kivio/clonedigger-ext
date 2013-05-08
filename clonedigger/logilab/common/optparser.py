@@ -33,19 +33,19 @@ With mymod.build that defines two functions run and add_options
 import sys
 import optparse
 
-class OptionParser(optparse.OptionParser):
 
+class OptionParser(optparse.OptionParser):
     def __init__(self, *args, **kwargs):
         optparse.OptionParser.__init__(self, *args, **kwargs)
         self._commands = {}
         self.min_args, self.max_args = 0, 1
-        
+
     def add_command(self, name, mod_or_funcs, help=''):
         """name of the command
 	name of module or tuple of functions (run, add_options)
 	"""
         assert isinstance(mod_or_funcs, str) or isinstance(mod_or_funcs, tuple), \
-	       "mod_or_funcs has to be a module name or a tuple of functions"
+            "mod_or_funcs has to be a module name or a tuple of functions"
         self._commands[name] = (mod_or_funcs, help)
 
     def print_main_help(self):
@@ -53,13 +53,13 @@ class OptionParser(optparse.OptionParser):
         print '\ncommands:'
         for cmdname, (_, help) in self._commands.items():
             print '% 10s - %s' % (cmdname, help)
-        
+
     def parse_command(self, args):
         if len(args) == 0:
             self.print_main_help()
             sys.exit(1)
         cmd = args[0]
-	args = args[1:]
+        args = args[1:]
         if cmd not in self._commands:
             if cmd in ('-h', '--help'):
                 self.print_main_help()
@@ -74,10 +74,10 @@ class OptionParser(optparse.OptionParser):
         self.description = help
         if isinstance(mod_or_f, str):
             exec 'from %s import run, add_options' % mod_or_f
-	else:
-	    run, add_options = mod_or_f
+        else:
+            run, add_options = mod_or_f
         add_options(self)
-        (options, args) = self.parse_args(args)        
+        (options, args) = self.parse_args(args)
         if not (self.min_args <= len(args) <= self.max_args):
             self.error('incorrect number of arguments')
         return run, options, args

@@ -37,12 +37,13 @@ from os.path import exists
 try:
     # python >= 2.3
     from optparse import OptionParser as BaseParser, Option as BaseOption, \
-         OptionGroup, OptionValueError, OptionError, Values, HelpFormatter, \
-         NO_DEFAULT
+        OptionGroup, OptionValueError, OptionError, Values, HelpFormatter, \
+        NO_DEFAULT
 except ImportError:
     # python < 2.3
     from optik import OptionParser as BaseParser, Option as BaseOption, \
-         OptionGroup, OptionValueError, OptionError, Values, HelpFormatter
+        OptionGroup, OptionValueError, OptionError, Values, HelpFormatter
+
     try:
         from optik import NO_DEFAULT
     except:
@@ -50,14 +51,15 @@ except ImportError:
 
 try:
     from mx import DateTime
+
     HAS_MX_DATETIME = True
 except ImportError:
     HAS_MX_DATETIME = False
 
-
 OPTPARSE_FORMAT_DEFAULT = sys.version_info >= (2, 4)
 
 from clonedigger.logilab.common.textutils import get_csv
+
 
 def check_regexp(option, opt, value):
     """check a regexp value by trying to compile it
@@ -70,7 +72,8 @@ def check_regexp(option, opt, value):
     except ValueError:
         raise OptionValueError(
             "option %s: invalid regexp value: %r" % (opt, value))
-    
+
+
 def check_csv(option, opt, value):
     """check a csv value by trying to split it
     return the list of separated values
@@ -82,6 +85,7 @@ def check_csv(option, opt, value):
     except ValueError:
         raise OptionValueError(
             "option %s: invalid csv value: %r" % (opt, value))
+
 
 def check_yn(option, opt, value):
     """check a yn value
@@ -95,6 +99,7 @@ def check_yn(option, opt, value):
         return False
     msg = "option %s: invalid yn value %r, should be in (y, yes, n, no)"
     raise OptionValueError(msg % (opt, value))
+
 
 def check_named(option, opt, value):
     """check a named value
@@ -114,11 +119,13 @@ def check_named(option, opt, value):
 <NAME>:<VALUE>"
     raise OptionValueError(msg % (opt, value))
 
+
 def check_password(option, opt, value):
     """check a password value (can't be empty)
     """
     # no actual checking, monkey patch if you want more
     return value
+
 
 def check_file(option, opt, value):
     """check a file value
@@ -129,15 +136,17 @@ def check_file(option, opt, value):
     msg = "option %s: file %r does not exist"
     raise OptionValueError(msg % (opt, value))
 
+
 def check_date(option, opt, value):
     """check a file value
     return the filepath
     """
     try:
         return DateTime.strptime(value, "%Y/%m/%d")
-    except DateTime.Error :
+    except DateTime.Error:
         raise OptionValueError(
             "expected format of %s is yyyy/mm/dd" % opt)
+
 
 def check_color(option, opt, value):
     """check a color value and returns it
@@ -147,15 +156,17 @@ def check_color(option, opt, value):
     # Case (1) : color label, we trust the end-user
     if re.match('[a-z0-9 ]+$', value, re.I):
         return value
-    # Case (2) : only accepts hexadecimal forms
+        # Case (2) : only accepts hexadecimal forms
     if re.match('#[a-f0-9]{6}', value, re.I):
         return value
-    # Else : not a color label neither a valid hexadecimal form => error
+        # Else : not a color label neither a valid hexadecimal form => error
     msg = "option %s: invalid color : %r, should be either hexadecimal \
     value or predefinied color"
     raise OptionValueError(msg % (opt, value))
 
+
 import types
+
 
 class Option(BaseOption):
     """override optik.Option to add some new option types
@@ -188,6 +199,7 @@ class Option(BaseOption):
         elif self.choices is not None:
             raise OptionError(
                 "must not supply choices for type %r" % self.type, self)
+
     BaseOption.CHECK_METHODS[2] = _check_choice
 
 
@@ -198,20 +210,22 @@ class Option(BaseOption):
             value = self.convert_value(opt, value)
         except AttributeError: # py < 2.4
             value = self.check_value(opt, value)
-        if self.type == 'named': 
+        if self.type == 'named':
             existant = getattr(values, self.dest)
             if existant:
                 existant.update(value)
                 value = existant
-       # And then take whatever action is expected of us.
-        # This is a separate method to make life easier for
+                # And then take whatever action is expected of us.
+            # This is a separate method to make life easier for
         # subclasses to add new actions.
         return self.take_action(
             self.action, self.dest, opt, value, values, parser)
-    
+
+
 class OptionParser(BaseParser):
     """override optik.OptionParser to use our Option class
     """
+
     def __init__(self, option_class=Option, *args, **kwargs):
         BaseParser.__init__(self, option_class=Option, *args, **kwargs)
 
@@ -219,12 +233,12 @@ class OptionParser(BaseParser):
 class ManHelpFormatter(HelpFormatter):
     """Format help using man pages ROFF format"""
 
-    def __init__ (self,
-                  indent_increment=0,
-                  max_help_position=24,
-                  width=79,
-                  short_first=0):
-        HelpFormatter.__init__ (
+    def __init__(self,
+                 indent_increment=0,
+                 max_help_position=24,
+                 width=79,
+                 short_first=0):
+        HelpFormatter.__init__(
             self, indent_increment, max_help_position, width, short_first)
 
     def format_heading(self, heading):
@@ -266,7 +280,7 @@ class ManHelpFormatter(HelpFormatter):
 .B %s 
 \- %s
 ''' % (pgm, short_desc.strip())
-        
+
     def format_synopsis(self, pgm):
         return '''.SH SYNOPSIS
 .B  %s
@@ -276,7 +290,7 @@ class ManHelpFormatter(HelpFormatter):
 .I <arguments>
 ]
 ''' % pgm
-        
+
     def format_long_description(self, pgm, long_desc):
         long_desc = '\n'.join([line.lstrip()
                                for line in long_desc.splitlines()])
@@ -287,7 +301,7 @@ class ManHelpFormatter(HelpFormatter):
 .B %s 
 %s
 ''' % (pgm, long_desc.strip())
-        
+
     def format_tail(self, pkginfo):
         return '''.SH SEE ALSO
 /usr/share/doc/pythonX.Y-%s/
@@ -326,6 +340,6 @@ def generate_manpage(optparser, pkginfo, section=1, stream=sys.stdout):
     print >> stream, optparser.format_option_help(formatter)
     print >> stream, formatter.format_tail(pkginfo)
 
-    
+
 __all__ = ('OptionParser', 'Option', 'OptionGroup', 'OptionValueError',
            'Values')

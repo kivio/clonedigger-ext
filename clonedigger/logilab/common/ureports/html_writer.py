@@ -18,18 +18,16 @@
 
 __revision__ = "$Id: html_writer.py,v 1.10 2006-03-08 09:47:29 katia Exp $"
 
-from cgi import escape
-
 from clonedigger.logilab.common.ureports import BaseWriter
 
 
 class HTMLWriter(BaseWriter):
     """format layouts as HTML"""
-    
+
     def __init__(self, snipet=None):
         super(HTMLWriter, self).__init__(self)
         self.snipet = snipet
-        
+
     def handle_attrs(self, layout):
         """get an attribute string from layout member attributes"""
         attrs = ''
@@ -40,14 +38,14 @@ class HTMLWriter(BaseWriter):
         if nid:
             attrs += ' id="%s"' % nid
         return attrs
-    
+
     def begin_format(self, layout):
         """begin to format a layout"""
         super(HTMLWriter, self).begin_format(layout)
         if self.snipet is None:
             self.writeln('<html>')
             self.writeln('<body>')
-        
+
     def end_format(self, layout):
         """finished to format a layout"""
         if self.snipet is None:
@@ -77,52 +75,53 @@ class HTMLWriter(BaseWriter):
             row = table_content[i]
             if i == 0 and layout.rheaders:
                 self.writeln('<tr class="header">')
-            elif i+1 == len(table_content) and layout.rrheaders:
+            elif i + 1 == len(table_content) and layout.rrheaders:
                 self.writeln('<tr class="header">')
             else:
-                self.writeln('<tr class="%s">' % (i%2 and 'even' or 'odd'))
+                self.writeln('<tr class="%s">' % (i % 2 and 'even' or 'odd'))
             for j in range(len(row)):
                 cell = row[j] or '&nbsp;'
                 if (layout.rheaders and i == 0) or \
-                   (layout.cheaders and j == 0) or \
-                   (layout.rrheaders and i+1 == len(table_content)) or \
-                   (layout.rcheaders and j+1 == len(row)):
+                        (layout.cheaders and j == 0) or \
+                        (layout.rrheaders and i + 1 == len(table_content)) or \
+                        (layout.rcheaders and j + 1 == len(row)):
                     self.writeln('<th>%s</th>' % cell)
                 else:
                     self.writeln('<td>%s</td>' % cell)
             self.writeln('</tr>')
         self.writeln('</table>')
-        
+
     def visit_list(self, layout):
         """display a list as html"""
         self.writeln('<ul%s>' % self.handle_attrs(layout))
         for row in list(self.compute_content(layout)):
             self.writeln('<li>%s</li>' % row)
         self.writeln('</ul>')
-        
+
     def visit_paragraph(self, layout):
         """display links (using <p>)"""
         self.write('<p>')
         self.format_children(layout)
         self.write('</p>')
-                   
+
     def visit_span(self, layout):
         """display links (using <p>)"""
         self.write('<span%s>' % self.handle_attrs(layout))
         self.format_children(layout)
         self.write('</span>')
-                   
+
     def visit_link(self, layout):
         """display links (using <a>)"""
         self.write(' <a href="%s"%s>%s</a>' % (layout.url,
                                                self.handle_attrs(layout),
                                                layout.label))
+
     def visit_verbatimtext(self, layout):
         """display verbatim text (using <pre>)"""
         self.write('<pre>')
         self.write(layout.data.replace('&', '&amp;').replace('<', '&lt;'))
         self.write('</pre>')
-        
+
     def visit_text(self, layout):
         """add some text"""
         data = layout.data

@@ -24,15 +24,16 @@
   This module requires at least python 2.2
 """
 
-from types import ListType, TupleType
 
 class Interface:
     """base class for interfaces"""
+
     def is_implemented_by(cls, instance):
         return implements(instance, cls)
+
     is_implemented_by = classmethod(is_implemented_by)
 
-    
+
 def implements(obj, interface):
     """return true if the give object (maybe an instance or class) implements
     the interface

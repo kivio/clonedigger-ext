@@ -27,13 +27,16 @@ from inspect import getargspec
 
 from clonedigger.logilab.astng import nodes
 
+
 def attach___dict__(node):
     """attach the __dict__ attribute to Class and Module objects"""
     dictn = nodes.Dict([])
     dictn.parent = node
     node.locals['__dict__'] = [dictn]
 
+
 _marker = object()
+
 
 def attach_dummy_node(node, name, object=_marker):
     """create a dummy node and register it in the locals of the given
@@ -43,7 +46,9 @@ def attach_dummy_node(node, name, object=_marker):
     enode.object = object
     _attach_local_node(node, enode, name)
 
+
 nodes.EmptyNode.has_underlying_object = lambda self: self.object is not _marker
+
 
 def attach_const_node(node, name, value):
     """create a Const node and register it in the locals of the given
@@ -51,13 +56,14 @@ def attach_const_node(node, name, value):
     """
     _attach_local_node(node, nodes.Const(value), name)
 
+
 if sys.version_info < (2, 5):
     def attach_import_node(node, modname, membername):
         """create a From node and register it in the locals of the given
         node with the specified name
         """
         _attach_local_node(node,
-                           nodes.From(modname, ( (membername, None), ) ),
+                           nodes.From(modname, ( (membername, None), )),
                            membername)
 else:
     def attach_import_node(node, modname, membername):
@@ -67,7 +73,8 @@ else:
         _attach_local_node(node,
                            nodes.From(modname, ( (membername, None), ), 0),
                            membername)
-    
+
+
 def _attach_local_node(parent, node, name):
     node.name = name # needed by add_local_node
     node.parent = parent
@@ -86,6 +93,7 @@ def build_module(name, doc=None):
     node.globals = node.locals = {}
     return node
 
+
 def build_class(name, basenames=None, doc=None):
     """create and initialize a astng Class node"""
     klass = nodes.Class(name, [], doc, nodes.Stmt([]))
@@ -99,7 +107,7 @@ def build_class(name, basenames=None, doc=None):
     klass.instance_attrs = {}
     for name, value in ( ('__name__', name),
                          #('__module__', node.root().name),
-                         ):
+    ):
         const = nodes.Const(value)
         const.parent = klass
         klass.locals[name] = [const]
@@ -109,12 +117,13 @@ def build_class(name, basenames=None, doc=None):
 if sys.version_info >= (2, 4):
     try:
         from compiler.ast import Decorators as BaseDecorators
+
         class Decorators(BaseDecorators):
             def __init__(self):
                 BaseDecorators.__init__(self, [], 0)
     except ImportError:
         Decorators = list
-        
+
     def build_function(name, args=None, defaults=None, flag=0, doc=None):
         """create and initialize a astng Function node"""
         args, defaults = args or [], defaults or []
@@ -126,8 +135,8 @@ if sys.version_info >= (2, 4):
         if args:
             register_arguments(func, args)
         return func
-    
-else:    
+
+else:
     def build_function(name, args=None, defaults=None, flag=0, doc=None):
         """create and initialize a astng Function node"""
         args, defaults = args or [], defaults or []
@@ -143,10 +152,12 @@ def build_name_assign(name, value):
     """create and initialize an astng Assign for a name assignment"""
     return nodes.Assign([nodes.AssName(name, 'OP_ASSIGN')], nodes.Const(value))
 
+
 def build_attr_assign(name, value, attr='self'):
     """create and initialize an astng Assign for an attribute assignment"""
     return nodes.Assign([nodes.AssAttr(nodes.Name(attr), name, 'OP_ASSIGN')],
                         nodes.Const(value))
+
 
 if sys.version_info < (2, 5):
     def build_from_import(fromname, names):
@@ -156,6 +167,7 @@ else:
     def build_from_import(fromname, names):
         """create and intialize an astng From import statement"""
         return nodes.From(fromname, [(name, None) for name in names], 0)
+
 
 def register_arguments(node, args):
     """add given arguments to local
@@ -175,6 +187,7 @@ def object_build_class(node, member):
     basenames = [base.__name__ for base in member.__bases__]
     return _base_class_object_build(node, member, basenames)
 
+
 def object_build_function(node, member):
     """create astng for a living function object"""
     args, varargs, varkw, defaults = getargspec(member)
@@ -186,9 +199,11 @@ def object_build_function(node, member):
                           member.func_code.co_flags, member.__doc__)
     node.add_local_node(func)
 
+
 def object_build_datadescriptor(node, member, name):
     """create astng for a living data descriptor object"""
     return _base_class_object_build(node, member, [], name)
+
 
 def object_build_methoddescriptor(node, member):
     """create astng for a living method descriptor object"""
@@ -196,8 +211,9 @@ def object_build_methoddescriptor(node, member):
     func = build_function(member.__name__, doc=member.__doc__)
     # set argnames to None to notice that we have no information, not
     # and empty argument list
-    func.argnames = None 
+    func.argnames = None
     node.add_local_node(func)
+
 
 def _base_class_object_build(node, member, basenames, name=None):
     """create astng for a living class object, with a given set of base names
@@ -227,8 +243,8 @@ def _base_class_object_build(node, member, basenames, name=None):
     return klass
 
 
-__all__ = ('register_arguments',  'build_module', 
-           'object_build_class', 'object_build_function', 
+__all__ = ('register_arguments', 'build_module',
+           'object_build_class', 'object_build_function',
            'object_build_datadescriptor', 'object_build_methoddescriptor',
            'attach___dict__', 'attach_dummy_node',
            'attach_const_node', 'attach_import_node')

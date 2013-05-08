@@ -35,8 +35,9 @@ else:
             if lineno == curlineno:
                 annotated.append('%4s\t->\t%s' % (lineno, line))
             else:
-                annotated.append('%4s\t\t%s' % (lineno, line))                
+                annotated.append('%4s\t\t%s' % (lineno, line))
         return '\n'.join(annotated)
+
 
 def getsource(obj):
     """Return the text of the source code for an object.
@@ -57,6 +58,7 @@ class Debugger(Pdb):
     - overrides list command to search for current block instead
       of using 5 lines of context
     """
+
     def __init__(self, tcbk):
         Pdb.__init__(self)
         self.reset()
@@ -64,7 +66,7 @@ class Debugger(Pdb):
             tcbk = tcbk.tb_next
         self._tcbk = tcbk
         self._histfile = osp.join(os.environ["HOME"], ".pdbhist")
-        
+
     def setup_history_file(self):
         """if readline is available, read pdb history file
         """
@@ -112,13 +114,14 @@ class Debugger(Pdb):
 
         """
         import re
+
         m = re.match(r"(\w+(\.\w+)*)\.(\w*)", text)
         if not m:
             return
         expr, attr = m.group(1, 3)
         object = eval(expr, namespace)
         words = dir(object)
-        if hasattr(object,'__class__'):
+        if hasattr(object, '__class__'):
             words.append('__class__')
             words = words + self.get_class_members(object.__class__)
         matches = []
@@ -127,15 +130,15 @@ class Debugger(Pdb):
             if word[:n] == attr and word != "__builtins__":
                 matches.append("%s.%s" % (expr, word))
         return matches
-    
+
     def get_class_members(self, klass):
         """implementation coming from rlcompleter.get_class_members"""
         ret = dir(klass)
-        if hasattr(klass,'__bases__'):
+        if hasattr(klass, '__bases__'):
             for base in klass.__bases__:
                 ret = ret + self.get_class_members(base)
         return ret
-        
+
     ## specific / overidden commands 
     def do_list(self, arg):
         """overrides default list command to display the surrounding block
@@ -153,6 +156,7 @@ class Debugger(Pdb):
                 Pdb.do_list(self, arg)
         else:
             Pdb.do_list(self, arg)
+
     do_l = do_list
 
     def do_open(self, arg):
@@ -161,7 +165,7 @@ class Debugger(Pdb):
         lineno = self.curframe.f_lineno
         cmd = 'emacsclient --no-wait +%s %s' % (lineno, filename)
         os.system(cmd)
-        
+
     do_o = do_open
 
 

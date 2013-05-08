@@ -52,23 +52,27 @@ from clonedigger.logilab.common.fileutils import ensure_fs_mode
 BULLET = '*'
 INDENT = '    '
 
+
 class NoEntry(Exception):
     """raised when we are unable to find an entry"""
 
+
 class EntryNotFound(Exception):
     """raised when we are unable to find a given entry"""
+
 
 class Version(tuple):
     """simple class to handle soft version number has a tuple while
     correctly printing it as X.Y.Z
     """
+
     def __new__(klass, versionstr):
         if isinstance(versionstr, basestring):
             parsed = [int(i) for i in versionstr.split('.')]
         else:
             parsed = versionstr
         return tuple.__new__(klass, parsed)
-        
+
     def __str__(self):
         return '.'.join([str(i) for i in self])
 
@@ -79,7 +83,7 @@ class ChangeLogEntry(object):
     its release date
     """
     version_class = Version
-    
+
     def __init__(self, date=None, version=None, **kwargs):
         self.__dict__.update(kwargs)
         if version:
@@ -88,7 +92,7 @@ class ChangeLogEntry(object):
             self.version = None
         self.date = date
         self.messages = []
-        
+
     def add_message(self, msg):
         """add a new message"""
         self.messages.append([msg])
@@ -110,9 +114,9 @@ class ChangeLogEntry(object):
 
 class ChangeLog(object):
     """object representation of a whole ChangeLog file"""
-    
+
     entry_class = ChangeLogEntry
-    
+
     def __init__(self, changelog_file, title=''):
         self.file = changelog_file
         self.title = title
@@ -123,7 +127,7 @@ class ChangeLog(object):
     def __repr__(self):
         return '<ChangeLog %s at %s (%s entries)>' % (self.file, id(self),
                                                       len(self.entries))
-    
+
     def add_entry(self, entry):
         """add a new entry to the change log"""
         self.entries.append(entry)
@@ -150,7 +154,7 @@ class ChangeLog(object):
         """add a new message to the latest opened entry"""
         entry = self.get_entry(create=create)
         entry.add_message(msg)
-    
+
     def load(self):
         """ read a logilab's ChangeLog from file """
         try:
@@ -178,15 +182,15 @@ class ChangeLog(object):
             else:
                 self.additional_content += line
         stream.close()
-        
+
     def format_title(self):
         return '%s\n\n' % self.title.strip()
-    
+
     def save(self):
         """write back change log"""
         ensure_fs_mode(self.file, S_IWRITE)
         self.write(open(self.file, 'w'))
-            
+
     def write(self, stream=sys.stdout):
         """write changelog to stream"""
         stream.write(self.format_title())

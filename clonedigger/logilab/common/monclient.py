@@ -3,6 +3,7 @@ provides a simple readline interface.
 """
 
 from warnings import warn
+
 warn('this module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=1)
 
@@ -12,14 +13,16 @@ import sys
 import readline
 import threading
 
+
 class SocketPrinter(threading.Thread):
     """A thread that reads from a socket and output
     to stdout as data are received"""
+
     def __init__(self, sock):
         threading.Thread.__init__(self)
         self.socket = sock
         self.stop = False
-        
+
     def run(self):
         """prints socket input indefinitely"""
         fd = self.socket.fileno()
@@ -31,19 +34,18 @@ class SocketPrinter(threading.Thread):
                 if data:
                     sys.stdout.write(data)
                     sys.stdout.flush()
-            
 
 
-def client( host, port ):
+def client(host, port):
     """simple client that just sends input to the server"""
-    sock = socket( AF_INET, SOCK_STREAM )
-    sock.connect( (host, port) )
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect((host, port))
     sp_thread = SocketPrinter(sock)
     sp_thread.start()
     while 1:
         try:
             line = raw_input() + "\n"
-            sock.send( line )
+            sock.send(line)
         except EOFError:
             print "Bye"
             break

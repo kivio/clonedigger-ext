@@ -19,6 +19,7 @@
 
 _marker = object()
 
+
 class Cache:
     """ a dictionnary like cache
 
@@ -26,7 +27,7 @@ class Cache:
         len(self._usage) <= self.size
         len(self.data) <= self.size
     """
-    
+
     def __init__(self, size=100):
         self.data = {}
         self.size = size
@@ -42,10 +43,10 @@ class Cache:
         # Special case : cache's size = 0 !
         if self.size <= 0:
             return
-        
+
         if not self._usage:
             self._usage.append(key)
-        
+
         elif self._usage[-1] != key:
             try:
                 self._usage.remove(key)
@@ -60,32 +61,32 @@ class Cache:
         else:
             pass # key is already the most recently used key
 
-            
+
     def __getitem__(self, key):
         value = self.data[key]
         self._update_usage(key)
         return value
-    
+
     def __setitem__(self, key, item):
         # Just make sure that size > 0 before inserting a new item in the cache
         if self.size > 0:
             self.data[key] = item
         self._update_usage(key)
-        
+
     def __delitem__(self, key):
         # If size <= 0, then we don't have anything to do
         # XXX FIXME : Should we let the 'del' raise a KeyError ?
         if self.size > 0:
             del self.data[key]
             self._usage.remove(key)
-        
+
     def pop(self, value, default=_marker):
         if value in self.data:
             self._usage.remove(value)
         if default is _marker:
             return self.data.pop(value)
         return self.data.pop(value, default)
-    
+
     def clear(self):
         self.data.clear()
         self._usage = []

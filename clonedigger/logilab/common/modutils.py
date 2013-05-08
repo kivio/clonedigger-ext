@@ -49,9 +49,9 @@ else:
     PY_SOURCE_EXTS = ('py',)
     PY_COMPILED_EXTS = ('so',)
     STD_LIB_DIR = join(sys.prefix, 'lib', 'python%s' % sys.version[:3])
-    
+
 BUILTIN_MODULES = dict(zip(sys.builtin_module_names,
-                           [1]*len(sys.builtin_module_names)))
+                           [1] * len(sys.builtin_module_names)))
 
 
 class NoSourceFile(Exception):
@@ -59,24 +59,25 @@ class NoSourceFile(Exception):
     source file for a precompiled file
     """
 
+
 class LazyObject(object):
     def __init__(self, module, obj):
         self.module = module
         self.obj = obj
         self._imported = None
-        
+
     def __getobj(self):
         if self._imported is None:
-           self._imported = getattr(load_module_from_name(self.module),
-                                    self.obj)
+            self._imported = getattr(load_module_from_name(self.module),
+                                     self.obj)
         return self._imported
-    
+
     def __getattribute__(self, attr):
         try:
             return super(LazyObject, self).__getattribute__(attr)
         except AttributeError, ex:
             return getattr(self.__getobj(), attr)
-        
+
     def __call__(self, *args, **kwargs):
         return self.__getobj()(*args, **kwargs)
 
@@ -151,8 +152,8 @@ def load_module_from_modpath(parts, path=None, use_sys=1):
             setattr(prevmodule, part, module)
         _file = getattr(module, "__file__", "")
         if not _file and len(modpath) != len(parts):
-            raise ImportError("no module in %s" % ".".join(parts[len(modpath):]) )
-        path = [dirname( _file )]
+            raise ImportError("no module in %s" % ".".join(parts[len(modpath):]))
+        path = [dirname(_file)]
         prevmodule = module
     return module
 
@@ -201,7 +202,7 @@ def modpath_from_file(filename):
         path = abspath(path)
         if path and base[:len(path)] == path:
             if filename.find('site-packages') != -1 and \
-                   path.find('site-packages') == -1:
+                            path.find('site-packages') == -1:
                 continue
             mod_path = [module for module in base[len(path):].split(os.sep)
                         if module]
@@ -215,7 +216,6 @@ def modpath_from_file(filename):
         raise ImportError('Unable to find module for %s in %s' % (
             filename, ', \n'.join(sys.path)))
     return mod_path
-
 
 
 def file_from_modpath(modpath, path=None, context_file=None):
@@ -264,7 +264,6 @@ def file_from_modpath(modpath, path=None, context_file=None):
     return _file_from_modpath(modpath, path, context)
 
 
-    
 def get_module_part(dotted_name, context_file=None):
     """given a dotted name return the module part of the name :
     
@@ -303,12 +302,12 @@ def get_module_part(dotted_name, context_file=None):
             if len(parts) > 2:
                 raise ImportError(dotted_name)
             return parts[0]
-        # don't use += or insert, we want a new list to be created !
+            # don't use += or insert, we want a new list to be created !
     path = None
     starti = 0
     if parts[0] == '':
         assert context_file is not None, \
-                'explicit relative import, but no context_file?'
+            'explicit relative import, but no context_file?'
         path = [] # prevent resolving the import non-relatively
         starti = 1
     while parts[starti] == '': # for all further dots: change context
@@ -316,8 +315,8 @@ def get_module_part(dotted_name, context_file=None):
         context_file = dirname(context_file)
     for i in range(starti, len(parts)):
         try:
-            file_from_modpath(parts[starti:i+1],
-                    path=path, context_file=context_file)
+            file_from_modpath(parts[starti:i + 1],
+                              path=path, context_file=context_file)
         except ImportError:
             if not i >= max(1, len(parts) - 2):
                 raise
@@ -325,7 +324,6 @@ def get_module_part(dotted_name, context_file=None):
     return dotted_name
 
 
-    
 def get_modules(package, src_directory, blacklist=STD_BLACKLIST):
     """given a package directory return a list of all available python
     modules in the package and its subpackages
@@ -347,6 +345,7 @@ def get_modules(package, src_directory, blacklist=STD_BLACKLIST):
       the list of all available python modules in the package and its
       subpackages
     """
+
     def func(modules, directory, fnames):
         """walk handler"""
         # remove files/directories in the black list
@@ -355,7 +354,7 @@ def get_modules(package, src_directory, blacklist=STD_BLACKLIST):
                 fnames.remove(norecurs)
             except ValueError:
                 continue
-        # check for __init__.py
+            # check for __init__.py
         if not '__init__.py' in fnames:
             while fnames:
                 fnames.pop()
@@ -370,10 +369,10 @@ def get_modules(package, src_directory, blacklist=STD_BLACKLIST):
             if _is_python_file(filename) and filename != '__init__.py':
                 module = package + src[len(src_directory):-3]
                 modules.append(module.replace(os.sep, '.'))
+
     modules = []
     walk(src_directory, func, modules)
     return modules
-
 
 
 def get_module_files(src_directory, blacklist=STD_BLACKLIST):
@@ -394,6 +393,7 @@ def get_module_files(src_directory, blacklist=STD_BLACKLIST):
       the list of all available python module's files in the package and
       its subpackages
     """
+
     def func(files, directory, fnames):
         """walk handler"""
         # remove files/directories in the black list
@@ -402,16 +402,17 @@ def get_module_files(src_directory, blacklist=STD_BLACKLIST):
                 fnames.remove(norecurs)
             except ValueError:
                 continue
-        # check for __init__.py
+            # check for __init__.py
         if not '__init__.py' in fnames:
             while fnames:
-                fnames.pop()            
+                fnames.pop()
         for filename in fnames:
             src = join(directory, filename)
             if isdir(src):
                 continue
             if _is_python_file(filename):
                 files.append(src)
+
     files = []
     walk(src_directory, func, files)
     return files
@@ -441,7 +442,6 @@ def get_source_file(filename, include_no_ext=False):
     raise NoSourceFile(filename)
 
 
-
 def is_python_source(filename):
     """
     rtype: bool
@@ -450,7 +450,6 @@ def is_python_source(filename):
     return splitext(filename)[1][1:] in PY_SOURCE_EXTS
 
 
-    
 def is_standard_module(modname, std_path=(STD_LIB_DIR,)):
     """try to guess if a module is a standard python module (by default,
     see `std_path` parameter's description)
@@ -476,7 +475,7 @@ def is_standard_module(modname, std_path=(STD_LIB_DIR,)):
         # import failed, i'm probably not so wrong by supposing it's
         # not standard...
         return 0
-    # modules which are not living in a file are considered standard
+        # modules which are not living in a file are considered standard
     # (sys and __builtin__ for instance)
     if filename is None:
         return 1
@@ -485,12 +484,11 @@ def is_standard_module(modname, std_path=(STD_LIB_DIR,)):
         path = abspath(path)
         if filename.startswith(path):
             pfx_len = len(path)
-            if filename[pfx_len+1:pfx_len+14] != 'site-packages':
+            if filename[pfx_len + 1:pfx_len + 14] != 'site-packages':
                 return 1
             return 0
     return False
 
-    
 
 def is_relative(modname, from_file):
     """return true if the given module name is relative to the given
@@ -547,6 +545,7 @@ def _file_from_modpath(modpath, path=None, context=None):
         mp_filename = _has_init(mp_filename)
     return mp_filename
 
+
 def _module_file(modpath, path=None):
     """get a module type / file path
 
@@ -573,6 +572,7 @@ def _module_file(modpath, path=None):
                 raise ImportError('No module %r' % '.'.join(modpath))
             path = [mp_filename]
     return mtype, mp_filename
+
 
 def _is_python_file(filename):
     """return true if the given filename should be considered as a python file

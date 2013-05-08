@@ -27,13 +27,13 @@ import sys
 import os
 from os.path import dirname, basename, abspath, join, isdir, exists
 
-from clonedigger.logilab.common.cache import Cache
 from clonedigger.logilab.common.modutils import NoSourceFile, is_python_source, \
-     file_from_modpath, load_module_from_name, \
-     get_module_files, get_source_file
+    file_from_modpath, load_module_from_name, \
+    get_module_files, get_source_file
 from clonedigger.logilab.common.configuration import OptionsProviderMixIn
 
 from clonedigger.logilab.astng import ASTNGBuildingException, Instance, nodes
+
 
 def astng_wrapper(func, modname):
     """wrapper to give to ASTNGManager.project_from_files"""
@@ -46,14 +46,17 @@ def astng_wrapper(func, modname):
         raise
     except Exception, ex:
         import traceback
+
         traceback.print_exc()
+
 
 def safe_repr(obj):
     try:
         return repr(obj)
     except:
         return '???'
-    
+
+
 class ASTNGManager(OptionsProviderMixIn):
     """the astng manager, responsible to build astng from files
      or modules.
@@ -62,17 +65,18 @@ class ASTNGManager(OptionsProviderMixIn):
     """
     name = 'astng loader'
     options = (("ignore",
-                {'type' : "csv", 'metavar' : "<file>",
-                 'dest' : "black_list", "default" : ('CVS',),
-                 'help' : "add <file> (may be a directory) to the black list\
+                {'type': "csv", 'metavar': "<file>",
+                 'dest': "black_list", "default": ('CVS',),
+                 'help': "add <file> (may be a directory) to the black list\
 . It should be a base name, not a path. You may set this option multiple times\
 ."}),
                ("project",
-                {'default': "No Name", 'type' : 'string', 'short': 'p',
-                 'metavar' : '<project name>',
-                 'help' : 'set the project name.'}),
-               )
-    brain = {}    
+                {'default': "No Name", 'type': 'string', 'short': 'p',
+                 'metavar': '<project name>',
+                 'help': 'set the project name.'}),
+    )
+    brain = {}
+
     def __init__(self):
         self.__dict__ = ASTNGManager.brain
         if not self.__dict__:
@@ -81,7 +85,7 @@ class ASTNGManager(OptionsProviderMixIn):
             self._mod_file_cache = None
             self.set_cache_size(200)
             self.load_defaults()
-            
+
     def set_cache_size(self, cache_size):
         """set the cache size (flush it as a side effect!)"""
         self._cache = {} #Cache(cache_size)
@@ -105,13 +109,15 @@ class ASTNGManager(OptionsProviderMixIn):
         except KeyError:
             if source:
                 try:
-		    from clonedigger.logilab.astng.builder import ASTNGBuilder
+                    from clonedigger.logilab.astng.builder import ASTNGBuilder
+
                     astng = ASTNGBuilder(self).file_build(filepath, modname)
                 except SyntaxError:
                     raise
                 except Exception, ex:
                     if __debug__:
                         import traceback
+
                         traceback.print_exc()
                     msg = 'Unable to load module %s (%s)' % (modname, ex)
                     raise ASTNGBuildingException(msg), None, sys.exc_info()[-1]
@@ -122,9 +128,9 @@ class ASTNGManager(OptionsProviderMixIn):
                                              filepath)
         self._cache[filepath] = astng
         return astng
-    
+
     from_file = astng_from_file # backward compat
-    
+
     def astng_from_module_name(self, modname, context_file=None):
         """given a module name, return the astng object"""
         old_cwd = os.getcwd()
@@ -134,7 +140,7 @@ class ASTNGManager(OptionsProviderMixIn):
             filepath = self.file_from_module_name(modname, context_file)
             if filepath is None or not is_python_source(filepath):
                 try:
-                    module = load_module_from_name(modname) 
+                    module = load_module_from_name(modname)
                 except ImportError, ex:
                     msg = 'Unable to load module %s (%s)' % (modname, ex)
                     raise ASTNGBuildingException(msg)
@@ -142,7 +148,7 @@ class ASTNGManager(OptionsProviderMixIn):
             return self.astng_from_file(filepath, modname, fallback=False)
         finally:
             os.chdir(old_cwd)
-            
+
     def file_from_module_name(self, modname, contextfile):
         try:
             value = self._mod_file_cache[(modname, contextfile)]
@@ -157,7 +163,7 @@ class ASTNGManager(OptionsProviderMixIn):
         if isinstance(value, ASTNGBuildingException):
             raise value
         return value
-        
+
     def astng_from_module(self, module, modname=None):
         """given an imported module, return the astng object"""
         modname = modname or module.__name__
@@ -173,12 +179,13 @@ class ASTNGManager(OptionsProviderMixIn):
             return self._cache[filepath]
         except KeyError:
             from clonedigger.logilab.astng.builder import ASTNGBuilder
+
             astng = ASTNGBuilder(self).module_build(module, modname)
             # update caches (filepath and astng.file are not necessarily  the
             # same (.pyc pb))
             self._cache[filepath] = self._cache[astng.file] = astng
             return astng
-            
+
     def astng_from_class(self, klass, modname=None):
         """get astng for the given class"""
         if modname is None:
@@ -190,7 +197,7 @@ class ASTNGManager(OptionsProviderMixIn):
         modastng = self.astng_from_module_name(modname)
         return modastng.getattr(klass.__name__)[0] # XXX
 
-            
+
     def infer_astng_from_something(self, obj, modname=None, context=None):
         """infer astng for the given class"""
         if hasattr(obj, '__class__') and not isinstance(obj, type):
@@ -216,13 +223,13 @@ class ASTNGManager(OptionsProviderMixIn):
             raise ASTNGBuildingException(
                 'Unexpected error while retreiving name for %s: %s'
                 % (safe_repr(klass), ex))
-        # take care, on living object __module__ is regularly wrong :(
+            # take care, on living object __module__ is regularly wrong :(
         modastng = self.astng_from_module_name(modname)
         for infered in modastng.igetattr(name, context):
             if klass is not obj and isinstance(infered, nodes.Class):
                 infered = Instance(infered)
             yield infered
-            
+
     def project_from_files(self, files, func_wrapper=astng_wrapper,
                            project_name=None, black_list=None):
         """return a Project from a list of files or modules"""
@@ -259,7 +266,6 @@ class ASTNGManager(OptionsProviderMixIn):
             return project
         finally:
             sys.path.pop(0)
-    
 
 
 class Package:
@@ -267,7 +273,7 @@ class Package:
 
     load submodules lazily, as they are needed
     """
-    
+
     def __init__(self, path, name, manager):
         self.name = name
         self.path = abspath(path)
@@ -284,7 +290,7 @@ class Package:
         if self.parent is None:
             return self.name
         return '%s.%s' % (self.parent.fullname(), self.name)
-    
+
     def get_subobject(self, name):
         """method used to get sub-objects lazily : sub package or module are
         only build once they are requested
@@ -306,7 +312,7 @@ class Package:
                 obj = self.manager.astng_from_file(objpath + '.py', modname)
             self.__subobjects[name] = obj
         return obj
-    
+
     def get_module(self, modname):
         """return the Module or Package object with the given name if any
         """
@@ -317,7 +323,7 @@ class Package:
         for part in path[1:]:
             obj = obj.get_subobject(part)
         return obj
-    
+
     def keys(self):
         if self.__keys is None:
             self.__keys = []
@@ -330,32 +336,35 @@ class Package:
                     self.__keys.append(fname)
             self.__keys.sort()
         return self.__keys[:]
-    
+
     def values(self):
         return [self.get_subobject(name) for name in self.keys()]
-        
+
     def items(self):
         return zip(self.keys(), self.values())
-    
+
     def has_key(self, name):
         return bool(self.get(name))
-    
+
     def get(self, name, default=None):
         try:
             return self.get_subobject(name)
         except KeyError:
             return default
-        
+
     def __getitem__(self, name):
-        return self.get_subobject(name)        
+        return self.get_subobject(name)
+
     def __contains__(self, name):
         return self.has_key(name)
+
     def __iter__(self):
         return iter(self.keys())
-    
+
 
 class Project:
     """a project handle a set of modules / packages"""
+
     def __init__(self, name=''):
         self.name = name
         self.path = None
@@ -366,14 +375,14 @@ class Project:
         self.values = self.locals.values
         self.keys = self.locals.keys
         self.has_key = self.locals.has_key
-        
+
     def add_module(self, node):
         self.locals[node.name] = node
         self.modules.append(node)
-        
+
     def get_module(self, name):
         return self.locals[name]
-    
+
     def getChildNodes(self):
         return self.modules
 

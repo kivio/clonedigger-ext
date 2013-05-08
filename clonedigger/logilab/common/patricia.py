@@ -27,10 +27,12 @@ TODO: _ advanced search
 """
 
 from warnings import warn
+
 warn('this module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=1)
 
 __revision__ = "$Id: patricia.py,v 1.5 2003-10-31 14:18:32 syt Exp $"
+
 
 def prefix(prfx, string):
     """return the index of the first character from string which differs from
@@ -43,17 +45,18 @@ def prefix(prfx, string):
         i += 1
     return i
 
+
 def split(index, string):
     """split a string on index, returning a 3-uple :
         (string before index, character at index, string after index)
     """
-    return string[:index], string[index], string[index+1:]
+    return string[:index], string[index], string[index + 1:]
 
 
 class PatriciaNode:
     """a PATRICIA trie node
     """
-    
+
     def __init__(self, value='', leaf=0, data=None):
         self.value = value
         self.edges = {}
@@ -61,7 +64,7 @@ class PatriciaNode:
             self.datas = [data]
         else:
             self.datas = []
-        
+
     def insert(self, string, data):
         """ insert the string in the trie and associate data to it
         if the string exists is the trie, data is added to the existing datas
@@ -78,7 +81,7 @@ class PatriciaNode:
                 pfx, e, self.value = split(ind, self.value)
                 if ind < len(string):
                     n = PatriciaNode(pfx)
-                    n.edges[string[ind]] = PatriciaNode(string[ind+1:], 1, data)
+                    n.edges[string[ind]] = PatriciaNode(string[ind + 1:], 1, data)
                 else:
                     n = PatriciaNode(pfx, 1, data)
                 n.edges[e] = self
@@ -99,12 +102,12 @@ class PatriciaNode:
             datas = self.datas
             self.datas = []
             return datas
-        else: 
+        else:
             pfx, e, sfx = split(len(self.value), string)
             if self.value == pfx:
                 return self.edges[e].remove(sfx)
         raise KeyError(string)
-    
+
     def lookup(self, string):
         """ return datas associated with string
         raise KeyError if the key isn't found
@@ -118,7 +121,7 @@ class PatriciaNode:
             if self.value == pfx:
                 return self.edges[e].lookup(sfx)
         raise KeyError(string)
-    
+
     def pfx_search(self, pfx, depth=-1):
         """ return all string with prefix pfx """
         sfxs = []
@@ -130,14 +133,14 @@ class PatriciaNode:
         else:
             if depth != 0:
                 for e, child in self.edges.items():
-                    search = child.pfx_search('', depth-1-len(self.value))
+                    search = child.pfx_search('', depth - 1 - len(self.value))
                     sfxs += ['%s%s%s' % (self.value, e, sfx)
                              for sfx in search]
             if (depth < 0 or len(self.value) <= depth):
                 if self.datas:
                     sfxs.append(self.value)
         return sfxs
-        
+
     def __str__(self, indent=''):
         node_str = ''.join([' %s%s:\n%s' % (indent, key,
                                             a.__str__('  %s' % indent))
@@ -153,7 +156,7 @@ class PatriciaTrie:
     """ wrapper class for a patricia tree
     delegates to the root of the tree (PatriciaNode)
     """
-    
+
     def __init__(self):
         self._trie = None
         self.words = 0
@@ -165,7 +168,7 @@ class PatriciaTrie:
             self._trie = PatriciaNode(string, 1, data)
         else:
             self._trie = self._trie.insert(string, data)
-            
+
     def remove(self, string):
         """ remove a string from the tree """
         if self._trie is not None:
@@ -186,6 +189,6 @@ class PatriciaTrie:
 
     def __str__(self):
         return self._trie.__str__()
-    
+
     def __repr__(self):
         return '<PatriciaTrie id=%s words=%s>' % (id(self), self.words)

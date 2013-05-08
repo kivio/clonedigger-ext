@@ -37,28 +37,33 @@ import re
 from warnings import warn
 
 from clonedigger.logilab.common.deprecation import obsolete
+
 try:
     from mx.DateTime import DateTimeType, DateTimeDeltaType, strptime
+
     HAS_MX_DATETIME = True
 except:
     HAS_MX_DATETIME = False
-    
-__all__ = ['get_dbapi_compliant_module', 
+
+__all__ = ['get_dbapi_compliant_module',
            'get_connection', 'set_prefered_driver',
            'PyConnection', 'PyCursor',
            'UnknownDriver', 'NoAdapterFound',
-           ]
+]
+
 
 class UnknownDriver(Exception):
     """raised when a unknown driver is given to get connexion"""
 
+
 class NoAdapterFound(Exception):
     """Raised when no Adpater to DBAPI was found"""
+
     def __init__(self, obj, objname=None, protocol='DBAPI'):
         if objname is None:
             objname = obj.__name__
         Exception.__init__(self, "Could not adapt %s to protocol %s" %
-                           (objname, protocol))
+                                 (objname, protocol))
         self.adapted_obj = obj
         self.objname = objname
         self._protocol = protocol
@@ -93,11 +98,12 @@ def _import_driver_module(driver, drivers, imported_elements=None, quiet=True):
 
 
 ## Connection and cursor wrappers #############################################
-        
+
 class SimpleConnectionWrapper:
     """A simple connection wrapper in python to decorated C-level connections
     with additional attributes
     """
+
     def __init__(self, cnx):
         """Wraps the original connection object"""
         self._cnx = cnx
@@ -120,31 +126,33 @@ class SimpleConnectionWrapper:
         return self._cnx.close()
 
     def __getattr__(self, attrname):
-        return getattr(self._cnx, attrname)    
+        return getattr(self._cnx, attrname)
+
 
 class PyConnection(SimpleConnectionWrapper):
     """A simple connection wrapper in python, generating wrapper for cursors as
     well (useful for profiling)
     """
+
     def __init__(self, cnx):
         """Wraps the original connection object"""
         self._cnx = cnx
-        
+
     def cursor(self):
         """Wraps cursor()"""
         return PyCursor(self._cnx.cursor())
 
 
-
 class PyCursor:
     """A simple cursor wrapper in python (useful for profiling)"""
+
     def __init__(self, cursor):
         self._cursor = cursor
 
     def close(self):
         """Wraps close()"""
         return self._cursor.close()
-        
+
     def execute(self, *args, **kwargs):
         """Wraps execute()"""
         return self._cursor.execute(*args, **kwargs)
@@ -167,10 +175,10 @@ class PyCursor:
 
     def __getattr__(self, attrname):
         return getattr(self._cursor, attrname)
-    
+
 
 ## Adapters list ##############################################################
-    
+
 class DBAPIAdapter:
     """Base class for all DBAPI adpaters"""
 
@@ -184,8 +192,8 @@ class DBAPIAdapter:
 
     def connect(self, host='', database='', user='', password='', port=''):
         """Wraps the native module connect method"""
-        kwargs = {'host' : host, 'port' : port, 'database' : database,
-                  'user' : user, 'password' : password}
+        kwargs = {'host': host, 'port': port, 'database': database,
+                  'user': user, 'password': password}
         cnx = self._native_module.connect(**kwargs)
         return self._wrap_if_needed(cnx, user)
 
@@ -200,9 +208,9 @@ class DBAPIAdapter:
         except AttributeError:
             # C or __slots__ object
             cnx = SimpleConnectionWrapper(cnx)
-            cnx.logged_user = user            
+            cnx.logged_user = user
         return cnx
-    
+
     def __getattr__(self, attrname):
         return getattr(self._native_module, attrname)
 
@@ -216,33 +224,34 @@ class DBAPIAdapter:
             return bool(value)
         elif typecode == self.BINARY and not binarywrap is None:
             return binarywrap(value)
-##                 elif typecode == dbapimod.DATETIME:
-##                     pass
-##                 elif typecode == dbapimod.NUMBER:
-##                     pass
-##                 else:
-##                     self.warning("type -%s- unknown for %r (%s) ",
-##                         typecode, value, type(value))
+        ##                 elif typecode == dbapimod.DATETIME:
+        ##                     pass
+        ##                 elif typecode == dbapimod.NUMBER:
+        ##                     pass
+        ##                 else:
+        ##                     self.warning("type -%s- unknown for %r (%s) ",
+        ##                         typecode, value, type(value))
         return value
-        
-    
+
+
 # Postgresql #########################################################
 
 class _PgdbAdapter(DBAPIAdapter):
     """Simple PGDB Adapter to DBAPI (pgdb modules lacks Binary() and NUMBER)
     """
+
     def __init__(self, native_module, pywrap=False):
         DBAPIAdapter.__init__(self, native_module, pywrap)
         self.NUMBER = native_module.pgdbType('int2', 'int4', 'serial',
                                              'int8', 'float4', 'float8',
                                              'numeric', 'bool', 'money')
-        
+
     def connect(self, host='', database='', user='', password='', port=''):
         """Wraps the native module connect method"""
         if port:
             warn("pgdb doesn't support 'port' parameter in connect()", UserWarning)
-        kwargs = {'host' : host, 'database' : database,
-                  'user' : user, 'password' : password}
+        kwargs = {'host': host, 'database': database,
+                  'user': user, 'password': password}
         cnx = self._native_module.connect(**kwargs)
         return self._wrap_if_needed(cnx, user)
 
@@ -250,6 +259,7 @@ class _PgdbAdapter(DBAPIAdapter):
 class _PsycopgAdapter(DBAPIAdapter):
     """Simple Psycopg Adapter to DBAPI (cnx_string differs from classical ones)
     """
+
     def connect(self, host='', database='', user='', password='', port=''):
         """Handles psycopg connexion format"""
         if host:
@@ -263,11 +273,13 @@ class _PsycopgAdapter(DBAPIAdapter):
         cnx = self._native_module.connect(cnx_string)
         cnx.set_isolation_level(1)
         return self._wrap_if_needed(cnx, user)
-    
+
+
 class _Psycopg2Adapter(_PsycopgAdapter):
     """Simple Psycopg2 Adapter to DBAPI (cnx_string differs from classical ones)
     """
     BOOLEAN = 16 # XXX see additional types in psycopg2.extensions
+
     def __init__(self, native_module, pywrap=False):
         DBAPIAdapter.__init__(self, native_module, pywrap)
         self._init_psycopg2()
@@ -282,6 +294,7 @@ class _Psycopg2Adapter(_PsycopgAdapter):
         # use mxDateTime instead of datetime if available
         if HAS_MX_DATETIME:
             from psycopg2 import extensions
+
             extensions.register_type(psycopg2._psycopg.MXDATETIME)
             extensions.register_type(psycopg2._psycopg.MXINTERVAL)
             extensions.register_type(psycopg2._psycopg.MXDATE)
@@ -296,16 +309,17 @@ class _Psycopg2Adapter(_PsycopgAdapter):
             #extensions.register_adapter(StringIO.StringIO, adapt_stringio)
             #import cStringIO
             #extensions.register_adapter(cStringIO.StringIO, adapt_stringio)
-        
+
 
 class _PgsqlAdapter(DBAPIAdapter):
     """Simple pyPgSQL Adapter to DBAPI
     """
+
     def connect(self, host='', database='', user='', password='', port=''):
         """Handles psycopg connexion format"""
-        kwargs = {'host' : host, 'port': port or None,
-                  'database' : database,
-                  'user' : user, 'password' : password or None}
+        kwargs = {'host': host, 'port': port or None,
+                  'database': database,
+                  'user': user, 'password': password or None}
         cnx = self._native_module.connect(**kwargs)
         return self._wrap_if_needed(cnx, user)
 
@@ -313,7 +327,7 @@ class _PgsqlAdapter(DBAPIAdapter):
     def Binary(self, string):
         """Emulates the Binary (cf. DB-API) function"""
         return str
-    
+
     def __getattr__(self, attrname):
         # __import__('pyPgSQL.PgSQL', ...) imports the toplevel package
         return getattr(self._native_module, attrname)
@@ -324,6 +338,7 @@ class _PgsqlAdapter(DBAPIAdapter):
 class _PySqlite2Adapter(DBAPIAdapter):
     """Simple pysqlite2 Adapter to DBAPI
     """
+
     def __init__(self, native_module, pywrap=False):
         DBAPIAdapter.__init__(self, native_module, pywrap)
         self._init_pysqlite2()
@@ -342,11 +357,15 @@ class _PySqlite2Adapter(DBAPIAdapter):
 
         # bytea type handling
         from StringIO import StringIO
+
         def adapt_bytea(data):
             return data.getvalue()
+
         sqlite.register_adapter(StringIO, adapt_bytea)
+
         def convert_bytea(data):
             return StringIO(data)
+
         sqlite.register_converter('bytea', convert_bytea)
 
         # boolean type handling
@@ -354,84 +373,100 @@ class _PySqlite2Adapter(DBAPIAdapter):
             if ustr.upper() in ('F', 'FALSE'):
                 return False
             return True
+
         sqlite.register_converter('boolean', convert_boolean)
+
         def adapt_boolean(bval):
             return str(bval).upper()
+
         sqlite.register_adapter(bool, adapt_boolean)
 
         # date/time types handling
         if HAS_MX_DATETIME:
             def adapt_mxdatetime(mxd):
                 return mxd.strftime('%Y-%m-%d %H:%M:%S')
+
             sqlite.register_adapter(DateTimeType, adapt_mxdatetime)
+
             def adapt_mxdatetimedelta(mxd):
                 return mxd.strftime('%H:%M:%S')
+
             sqlite.register_adapter(DateTimeDeltaType, adapt_mxdatetimedelta)
-            
+
             def convert_mxdate(ustr):
                 return strptime(ustr, '%Y-%m-%d %H:%M:%S')
+
             sqlite.register_converter('date', convert_mxdate)
+
             def convert_mxdatetime(ustr):
                 return strptime(ustr, '%Y-%m-%d %H:%M:%S')
+
             sqlite.register_converter('timestamp', convert_mxdatetime)
+
             def convert_mxtime(ustr):
                 try:
                     return strptime(ustr, '%H:%M:%S')
                 except:
                     # DateTime used as Time?
                     return strptime(ustr, '%Y-%m-%d %H:%M:%S')
+
             sqlite.register_converter('time', convert_mxtime)
-        # XXX else use datetime.datetime
-    
-            
+            # XXX else use datetime.datetime
+
+
     def connect(self, host='', database='', user='', password='', port=None):
         """Handles sqlite connexion format"""
         sqlite = self._native_module
-        
+
         class PySqlite2Cursor(sqlite.Cursor):
             """cursor adapting usual dict format to pysqlite named format
             in SQL queries
             """
+
             def _replace_parameters(self, sql, kwargs):
                 if isinstance(kwargs, dict):
                     return re.sub(r'%\(([^\)]+)\)s', r':\1', sql)
-                # XXX dumb
+                    # XXX dumb
                 return re.sub(r'%s', r'?', sql)
-                    
+
             def execute(self, sql, kwargs=None):
                 if kwargs is None:
                     self.__class__.__bases__[0].execute(self, sql)
                 else:
                     self.__class__.__bases__[0].execute(self, self._replace_parameters(sql, kwargs), kwargs)
+
             def executemany(self, sql, kwargss):
                 if not isinstance(kwargss, (list, tuple)):
                     kwargss = tuple(kwargss)
                 self.__class__.__bases__[0].executemany(self, self._replace_parameters(sql, kwargss[0]), kwargss)
-                    
+
         class PySqlite2CnxWrapper:
             def __init__(self, cnx):
                 self._cnx = cnx
-                
+
             def cursor(self):
                 return self._cnx.cursor(PySqlite2Cursor)
+
             def __getattr__(self, attrname):
                 return getattr(self._cnx, attrname)
+
         cnx = sqlite.connect(database, detect_types=sqlite.PARSE_DECLTYPES)
         return self._wrap_if_needed(PySqlite2CnxWrapper(cnx), user)
-    
+
     def process_value(self, value, description, encoding='utf-8', binarywrap=None):
         if not binarywrap is None and isinstance(value, self._native_module.Binary):
             return binarywrap(value)
         return value # no type code support, can't do anything
 
-    
+
 class _SqliteAdapter(DBAPIAdapter):
     """Simple sqlite Adapter to DBAPI
     """
+
     def __init__(self, native_module, pywrap=False):
         DBAPIAdapter.__init__(self, native_module, pywrap)
         self.DATETIME = native_module.TIMESTAMP
-        
+
     def connect(self, host='', database='', user='', password='', port=''):
         """Handles sqlite connexion format"""
         cnx = self._native_module.connect(database)
@@ -459,22 +494,23 @@ class _MySqlDBAdapter(DBAPIAdapter):
         if HAS_MX_DATETIME:
             from MySQLdb import times
             from mx import DateTime as mxdt
+
             times.Date = times.date = mxdt.Date
             times.Time = times.time = mxdt.Time
             times.Timestamp = times.datetime = mxdt.DateTime
             times.TimeDelta = times.timedelta = mxdt.TimeDelta
             times.DateTimeType = mxdt.DateTimeType
             times.DateTimeDeltaType = mxdt.DateTimeDeltaType
-            
+
     def connect(self, host='', database='', user='', password='', port=None,
                 unicode=True, charset='utf8'):
         """Handles mysqldb connexion format
         the unicode named argument asks to use Unicode objects for strings
         in result sets and query parameters
         """
-        kwargs = {'host' : host or '', 'db' : database,
-                  'user' : user, 'passwd' : password,
-                  'use_unicode' : unicode}
+        kwargs = {'host': host or '', 'db': database,
+                  'user': user, 'passwd': password,
+                  'use_unicode': unicode}
         # MySQLdb doesn't support None port
         if port:
             kwargs['port'] = int(port)
@@ -501,7 +537,7 @@ class _MySqlDBAdapter(DBAPIAdapter):
                 if isinstance(value, str):
                     return unicode(value, encoding)
                 return value
-            #if maxsize == 255: # tinyblob (2**8 - 1)
+                #if maxsize == 255: # tinyblob (2**8 - 1)
             #    return value
             if binarywrap is None:
                 return value
@@ -509,7 +545,7 @@ class _MySqlDBAdapter(DBAPIAdapter):
         return DBAPIAdapter.process_value(self, value, description, encoding, binarywrap)
 
     def type_code_test(self, cursor):
-        print '*'*80
+        print '*' * 80
         print 'module type codes'
         for typename in ('STRING', 'BOOLEAN', 'BINARY', 'DATETIME', 'NUMBER'):
             print typename, getattr(self, typename)
@@ -531,52 +567,52 @@ class _MySqlDBAdapter(DBAPIAdapter):
                 print name, descr[i]
         finally:
             cursor.execute("DROP TABLE _type_code_test")
-            
 
 
 ## Drivers, Adapters and helpers registries ###################################
 
 
 PREFERED_DRIVERS = {
-    "postgres" : [ 'psycopg2', 'psycopg', 'pgdb', 'pyPgSQL.PgSQL', ],
-    "mysql" : [ 'MySQLdb', ], # 'pyMySQL.MySQL, ],
-    "sqlite" : ['pysqlite2.dbapi2', 'sqlite', 'sqlite3',],
-    }
+    "postgres": ['psycopg2', 'psycopg', 'pgdb', 'pyPgSQL.PgSQL', ],
+    "mysql": ['MySQLdb', ], # 'pyMySQL.MySQL, ],
+    "sqlite": ['pysqlite2.dbapi2', 'sqlite', 'sqlite3', ],
+}
 
 _ADAPTERS = {
-    'postgres' : { 'pgdb' : _PgdbAdapter,
-                   'psycopg' : _PsycopgAdapter,
-                   'psycopg2' : _Psycopg2Adapter,
-                   'pyPgSQL.PgSQL' : _PgsqlAdapter,
-                   },
-    'mysql' : { 'MySQLdb' : _MySqlDBAdapter, },
-    'sqlite' : { 'pysqlite2.dbapi2' : _PySqlite2Adapter,
-                 'sqlite' : _SqliteAdapter,
-                 'sqlite3' : _PySqlite2Adapter, },
-    }
+    'postgres': {'pgdb': _PgdbAdapter,
+                 'psycopg': _PsycopgAdapter,
+                 'psycopg2': _Psycopg2Adapter,
+                 'pyPgSQL.PgSQL': _PgsqlAdapter,
+    },
+    'mysql': {'MySQLdb': _MySqlDBAdapter, },
+    'sqlite': {'pysqlite2.dbapi2': _PySqlite2Adapter,
+               'sqlite': _SqliteAdapter,
+               'sqlite3': _PySqlite2Adapter, },
+}
 
 # _AdapterDirectory could be more generic by adding a 'protocol' parameter
 # This one would become an adapter for 'DBAPI' protocol
 class _AdapterDirectory(dict):
     """A simple dict that registers all adapters"""
+
     def register_adapter(self, adapter, driver, modname):
         """Registers 'adapter' in directory as adapting 'mod'"""
         try:
             driver_dict = self[driver]
         except KeyError:
             self[driver] = {}
-            
+
         # XXX Should we have a list of adapters ?
         driver_dict[modname] = adapter
-    
-    def adapt(self, database, prefered_drivers = None, pywrap = False):
+
+    def adapt(self, database, prefered_drivers=None, pywrap=False):
         """Returns an dbapi-compliant object based for database"""
         prefered_drivers = prefered_drivers or PREFERED_DRIVERS
         module, modname = _import_driver_module(database, prefered_drivers)
         try:
             return self[database][modname](module, pywrap=pywrap)
         except KeyError:
-            raise NoAdapterFound(obj=module)        
+            raise NoAdapterFound(obj=module)
 
     def get_adapter(self, database, modname):
         try:
@@ -584,12 +620,13 @@ class _AdapterDirectory(dict):
         except KeyError:
             raise NoAdapterFound(None, modname)
 
+
 ADAPTER_DIRECTORY = _AdapterDirectory(_ADAPTERS)
 del _AdapterDirectory
 
 
 ## Main functions #############################################################
-    
+
 def set_prefered_driver(database, module, _drivers=PREFERED_DRIVERS):
     """sets the prefered driver module for database
     database is the name of the db engine (postgresql, mysql...)
@@ -601,15 +638,16 @@ def set_prefered_driver(database, module, _drivers=PREFERED_DRIVERS):
         modules = _drivers[database]
     except KeyError:
         raise UnknownDriver('Unknown database %s' % database)
-    # Remove module from modules list, and re-insert it in first position
+        # Remove module from modules list, and re-insert it in first position
     try:
         modules.remove(module)
     except ValueError:
         raise UnknownDriver('Unknown module %s for %s' % (module, database))
     modules.insert(0, module)
-    
-def get_dbapi_compliant_module(driver, prefered_drivers = None, quiet = False,
-                               pywrap = False):
+
+
+def get_dbapi_compliant_module(driver, prefered_drivers=None, quiet=False,
+                               pywrap=False):
     """returns a fully dbapi compliant module"""
     try:
         mod = ADAPTER_DIRECTORY.adapt(driver, prefered_drivers, pywrap=pywrap)
@@ -619,12 +657,14 @@ def get_dbapi_compliant_module(driver, prefered_drivers = None, quiet = False,
             print >> sys.stderr, msg % err.objname
         mod = err.adapted_obj
     from clonedigger.logilab.common.adbh import get_adv_func_helper
+
     mod.adv_func_helper = get_adv_func_helper(driver)
     return mod
 
-def get_connection(driver='postgres', host='', database='', user='', 
-                  password='', port='', quiet=False, drivers=PREFERED_DRIVERS,
-                  pywrap=False):
+
+def get_connection(driver='postgres', host='', database='', user='',
+                   password='', port='', quiet=False, drivers=PREFERED_DRIVERS,
+                   pywrap=False):
     """return a db connexion according to given arguments"""
     module, modname = _import_driver_module(driver, drivers, ['connect'])
     try:
@@ -647,4 +687,5 @@ def get_connection(driver='postgres', host='', database='', user='',
 
 
 from clonedigger.logilab.common.deprecation import moved
+
 get_adv_func_helper = moved('logilab.common.adbh', 'get_adv_func_helper')

@@ -21,12 +21,12 @@ __docformat__ = "restructuredtext en"
 
 # SQLGenerator ################################################################
 
-class SQLGenerator :
+class SQLGenerator:
     """
     Helper class to generate SQL strings to use with python's DB-API
     """
 
-    def where(self, keys, addon=None) :
+    def where(self, keys, addon=None):
         """
         keys : list of keys
         
@@ -43,7 +43,7 @@ class SQLGenerator :
             restriction.insert(0, addon)
         return " AND ".join(restriction)
 
-    def set(self, keys) :
+    def set(self, keys):
         """
         keys : list of keys
         
@@ -55,7 +55,7 @@ class SQLGenerator :
         """
         return ", ".join(["%s = %%(%s)s" % (x, x) for x in keys])
 
-    def insert(self, table, params) :
+    def insert(self, table, params):
         """
         table : name of the table
         params :  dictionnary that will be used as in cursor.execute(sql,params)
@@ -71,7 +71,7 @@ class SQLGenerator :
         sql = 'INSERT INTO %s ( %s ) VALUES ( %s )' % (table, keys, values)
         return sql
 
-    def select(self, table, params) :
+    def select(self, table, params):
         """
         table : name of the table
         params :  dictionnary that will be used as in cursor.execute(sql,params)
@@ -86,11 +86,11 @@ class SQLGenerator :
         """
         sql = 'SELECT * FROM %s' % table
         where = self.where(params.keys())
-        if where :
+        if where:
             sql = sql + ' WHERE %s' % where
         return sql
 
-    def adv_select(self, model, tables, params, joins=None) :
+    def adv_select(self, model, tables, params, joins=None):
         """
         model  : list of columns to select
         tables : list of tables used in from
@@ -109,11 +109,11 @@ class SQLGenerator :
         if joins and type(joins) != type(''):
             joins = ' AND '.join(joins)
         where = self.where(params.keys(), joins)
-        if where :
+        if where:
             sql = sql + ' WHERE %s' % where
         return sql
 
-    def delete(self, table, params) :
+    def delete(self, table, params):
         """
         table : name of the table
         params :  dictionnary that will be used as in cursor.execute(sql,params)
@@ -128,7 +128,7 @@ class SQLGenerator :
         sql = 'DELETE FROM %s WHERE %s' % (table, where)
         return sql
 
-    def update(self, table, params, unique) :
+    def update(self, table, params, unique):
         """
         table : name of the table
         params :  dictionnary that will be used as in cursor.execute(sql,params)
@@ -143,6 +143,7 @@ class SQLGenerator :
         set = self.set([key for key in params if key not in unique])
         sql = 'UPDATE %s SET %s WHERE %s' % (table, set, where)
         return sql
+
 
 class BaseTable:
     """
@@ -162,14 +163,14 @@ class BaseTable:
         self._table_fields = table_fields
         self._table_name = table_name
         info = {
-            'key' : self._primary_key,
-            'table' : self._table_name,
-            'columns' : ",".join( [ f for f,t in self._table_fields ] ),
-            'values' : ",".join( [sql_repr(t, "%%(%s)s" % f)
-                                  for f,t in self._table_fields] ),
-            'updates' : ",".join( ["%s=%s" % (f, sql_repr(t, "%%(%s)s" % f))
-                                   for f,t in self._table_fields] ),
-            }
+            'key': self._primary_key,
+            'table': self._table_name,
+            'columns': ",".join([f for f, t in self._table_fields]),
+            'values': ",".join([sql_repr(t, "%%(%s)s" % f)
+                                for f, t in self._table_fields]),
+            'updates': ",".join(["%s=%s" % (f, sql_repr(t, "%%(%s)s" % f))
+                                 for f, t in self._table_fields]),
+        }
         self._insert_stmt = ("INSERT into %(table)s (%(columns)s) "
                              "VALUES (%(values)s) WHERE %(key)s=%%(key)s") % info
         self._update_stmt = ("UPDATE %(table)s SET (%(updates)s) "
@@ -182,7 +183,7 @@ class BaseTable:
         for k, t in table_fields:
             if hasattr(self, k):
                 raise ValueError("Cannot use %s as a table field" % k)
-            setattr(self, k,None)
+            setattr(self, k, None)
 
 
     def as_dict(self):
@@ -192,10 +193,10 @@ class BaseTable:
         return d
 
     def select(self, cursor):
-        d = { 'key' : getattr(self,self._primary_key) }
+        d = {'key': getattr(self, self._primary_key)}
         cursor.execute(self._select_stmt % d)
         rows = cursor.fetchall()
-        if len(rows)!=1:
+        if len(rows) != 1:
             msg = "Select: ambiguous query returned %d rows"
             raise ValueError(msg % len(rows))
         for (f, t), v in zip(self._table_fields, rows[0]):
@@ -206,12 +207,12 @@ class BaseTable:
         cursor.execute(self._update_stmt % d)
 
     def delete(self, cursor):
-        d = { 'key' : getattr(self,self._primary_key) }
+        d = {'key': getattr(self, self._primary_key)}
 
 
 # Helper functions #############################################################
 
-def name_fields(cursor, records) :
+def name_fields(cursor, records):
     """
     Take a cursor and a list of records fetched with that cursor, then return a
     list of dictionnaries (one for each record) whose keys are column names and
@@ -221,21 +222,23 @@ def name_fields(cursor, records) :
     records : list returned by fetch*()
     """
     result = []
-    for record in records :
+    for record in records:
         record_dict = {}
-        for i in range(len(record)) :
+        for i in range(len(record)):
             record_dict[cursor.description[i][0]] = record[i]
         result.append(record_dict)
     return result
+
 
 def sql_repr(type, val):
     if type == 's':
         return "'%s'" % (val,)
     else:
         return val
-            
-        
+
+
 if __name__ == "__main__":
     import doctest
     from clonedigger.logilab.common import sqlgen
+
     print doctest.testmod(sqlgen)

@@ -18,17 +18,22 @@ a daemon mix-in class
 
 __revision__ = '$Id: daemon.py,v 1.10 2005-11-22 13:13:01 syt Exp $'
 
-import os, signal, sys, time
+import os
+import signal
+import sys
+import time
+
 from clonedigger.logilab.common.logger import make_logger, LOG_ALERT, LOG_NOTICE
+
 
 class DaemonMixIn:
     """ mixin to make a daemon from watchers/queriers
     """
 
-    def __init__(self, configmod) :
+    def __init__(self, configmod):
         self.delay = configmod.DELAY
         self.name = str(self.__class__).split('.')[-1]
-        self._pid_file = os.path.join('/tmp', '%s.pid'%self.name)
+        self._pid_file = os.path.join('/tmp', '%s.pid' % self.name)
         if os.path.exists(self._pid_file):
             raise Exception('''Another instance of %s must be running.
 If it i not the case, remove the file %s''' % (self.name, self._pid_file))
@@ -46,14 +51,14 @@ If it i not the case, remove the file %s''' % (self.name, self._pid_file))
             # fork so the parent can exist
             if (os.fork()):
                 return -1
-            # deconnect from tty and create a new session
+                # deconnect from tty and create a new session
             os.setsid()
             # fork again so the parent, (the session group leader), can exit.
             # as a non-session group leader, we can never regain a controlling
             # terminal.
             if (os.fork()):
                 return -1
-            # move to the root to avoit mount pb
+                # move to the root to avoit mount pb
             os.chdir('/')
             # set paranoid umask
             os.umask(077)
@@ -68,8 +73,8 @@ If it i not the case, remove the file %s''' % (self.name, self._pid_file))
             # put signal handler
             signal.signal(signal.SIGTERM, self.signal_handler)
             signal.signal(signal.SIGHUP, self.signal_handler)
-		
-        
+
+
     def run(self):
         """ optionaly go in daemon mode and
         do what concrete classe has to do and pauses for delay between runs
@@ -87,7 +92,7 @@ If it i not the case, remove the file %s''' % (self.name, self._pid_file))
             except Exception, e:
                 # display for info, sleep, and hope the problem will be solved
                 # later.
-                self.config.log(LOG_ALERT, 'Internal error: %s'%(e))
+                self.config.log(LOG_ALERT, 'Internal error: %s' % (e))
             if not self._alive:
                 break
             try:
@@ -96,10 +101,10 @@ If it i not the case, remove the file %s''' % (self.name, self._pid_file))
                 self._sleeping = 0
             except SystemExit:
                 break
-        self.config.log(LOG_NOTICE, '%s instance exited'%self.name)
+        self.config.log(LOG_NOTICE, '%s instance exited' % self.name)
         # remove pid file
         os.remove(self._pid_file)
-        
+
     def signal_handler(self, sig_num, stack_frame):
         if sig_num == signal.SIGTERM:
             if self._sleeping:
@@ -116,11 +121,12 @@ If it i not the case, remove the file %s''' % (self.name, self._pid_file))
     def _run(self):
         """should be overidden in the mixed class"""
         raise NotImplementedError()
-    
+
 ## command line utilities ######################################################
 
 L_OPTIONS = ["help", "log=", "delay=", 'no-detach']
 S_OPTIONS = 'hl:d:n'
+
 
 def print_help(modconfig):
     print """  --help or -h
@@ -132,11 +138,12 @@ def print_help(modconfig):
     the number of seconds between two runs.
     Defaults to %s""" % (modconfig.LOG_TRESHOLD, modconfig.DELAY)
 
+
 def handle_option(modconfig, opt_name, opt_value, help_meth):
-    if opt_name in ('-h','--help'):            
+    if opt_name in ('-h', '--help'):
         help_meth()
         sys.exit(0)
-    elif opt_name in ('-l','--log'):
+    elif opt_name in ('-l', '--log'):
         modconfig.LOG_TRESHOLD = int(opt_value)
     elif opt_name in ('-d', '--delay'):
         modconfig.DELAY = int(opt_value)

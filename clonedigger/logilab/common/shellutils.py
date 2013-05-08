@@ -20,7 +20,7 @@ scripts
 """
 __docformat__ = "restructuredtext en"
 
-import os        
+import os
 import glob
 import shutil
 import sys
@@ -44,6 +44,7 @@ def chown(path, login=None, group=None):
             uid = int(login)
         except ValueError:
             import pwd
+
             uid = pwd.getpwnam(login).pw_uid
     if group is None:
         gid = -1
@@ -52,9 +53,10 @@ def chown(path, login=None, group=None):
             gid = int(group)
         except ValueError:
             import grp
+
             gid = grp.getgrname(group).gr_gid
     os.chown(path, uid, gid)
-        
+
 
 def mv(source, destination, _action=shutil.move):
     """a shell like mv, supporting wildcards
@@ -76,7 +78,8 @@ def mv(source, destination, _action=shutil.move):
         except OSError, ex:
             raise OSError('Unable to move %r to %r (%s)' % (
                 source, destination, ex))
-        
+
+
 def rm(*files):
     """a shell like rm, supporting wildcards
     """
@@ -88,7 +91,8 @@ def rm(*files):
                 shutil.rmtree(filename)
             else:
                 os.remove(filename)
-    
+
+
 def cp(source, destination):
     """a shell like cp, supporting wildcards
     """
@@ -134,6 +138,7 @@ def find(directory, exts, exclude=False, blacklist=STD_BLACKLIST):
                 if filename.endswith(ext):
                     return True
             return False
+
     def func(files, directory, fnames):
         """walk handler"""
         # remove files/directories in the black list
@@ -148,6 +153,7 @@ def find(directory, exts, exclude=False, blacklist=STD_BLACKLIST):
                 continue
             if match(filename, exts):
                 files.append(src)
+
     files = []
     walk(directory, func, files)
     return files
@@ -157,14 +163,14 @@ class Execute:
     """This is a deadlock safe version of popen2 (no stdin), that returns
     an object with errorlevel, out and err
     """
-    
+
     def __init__(self, command):
         outfile = tempfile.mktemp()
         errfile = tempfile.mktemp()
         self.status = os.system("( %s ) >%s 2>%s" %
                                 (command, outfile, errfile)) >> 8
-        self.out = open(outfile,"r").read()
-        self.err = open(errfile,"r").read()
+        self.out = open(outfile, "r").read()
+        self.err = open(errfile, "r").read()
         os.remove(outfile)
         os.remove(errfile)
 
@@ -182,7 +188,8 @@ def acquire_lock(lock_file, max_try=10, delay=10):
     stream = open(lock_file, 'w')
     stream.write(str(os.getpid()))
     stream.close()
-    
+
+
 def release_lock(lock_file):
     """release a lock represented by a file on the file system"""
     os.remove(lock_file)
@@ -190,7 +197,7 @@ def release_lock(lock_file):
 
 class ProgressBar(object):
     """a simple text progression bar"""
-    
+
     def __init__(self, nbops, size=20., stream=sys.stdout):
         self._dotevery = max(nbops / size, 1)
         self._fstr = '\r[%-20s]'

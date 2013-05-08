@@ -15,13 +15,14 @@
 """
 
 from warnings import warn
+
 warn('html module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=2)
 
 __revision__ = "$Id: html.py,v 1.5 2003-09-12 11:54:47 syt Exp $"
 
 import traceback
-from xml.sax.saxutils import escape  
+from xml.sax.saxutils import escape
 
 # mk html traceback error #####################################################
 
@@ -37,14 +38,14 @@ def html_traceback(info, exception,
         strings.append(body)
         strings.append('</div>')
     if title:
-        strings.append('<h1 class="error">%s</h1>'% escape(title))
+        strings.append('<h1 class="error">%s</h1>' % escape(title))
     strings.append('<p class="error">%s</p>' % escape(str(exception)))
     strings.append('<div class="error_traceback">')
-    for stackentry in stacktb :
+    for stackentry in stacktb:
         strings.append('<b>File</b> <b class="file">%s</b>, <b>line</b> '
-                      '<b class="line">%s</b>, <b>function</b> '
-                      '<b class="function">%s</b>:<br/>'%(
-            escape(stackentry[0]), stackentry[1], stackentry[2]))
+                       '<b class="line">%s</b>, <b>function</b> '
+                       '<b class="function">%s</b>:<br/>' % (
+                           escape(stackentry[0]), stackentry[1], stackentry[2]))
         if stackentry[3]:
             string = escape(repr(stackentry[3])[1:-1])#.encode(encoding)
             strings.append('&nbsp;&nbsp;%s<br/>\n' % string)

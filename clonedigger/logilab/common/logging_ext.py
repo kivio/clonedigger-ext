@@ -24,9 +24,11 @@ import logging
 
 from clonedigger.logilab.common.textutils import colorize_ansi
 
+
 def xxx_cyan(record):
     if 'XXX' in record.message:
         return 'cyan'
+
 
 class ColorFormatter(logging.Formatter):
     """
@@ -48,11 +50,11 @@ class ColorFormatter(logging.Formatter):
                        'ERROR': 'red',
                        'WARNING': 'magenta',
                        'INFO': 'yellow',
-                       }
+        }
         if colors is not None:
             assert isinstance(colors, dict)
-            self.colors.update(colors)            
-                               
+            self.colors.update(colors)
+
     def format(self, record):
         msg = logging.Formatter.format(self, record)
         if record.levelname in self.colors:
@@ -61,9 +63,10 @@ class ColorFormatter(logging.Formatter):
         else:
             for cf in self.colorfilters:
                 color = cf(record)
-                if color: 
+                if color:
                     return colorize_ansi(msg, color)
         return msg
+
 
 def set_color_formatter(logger=None, **kw):
     """

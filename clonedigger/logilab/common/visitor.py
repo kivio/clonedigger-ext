@@ -16,33 +16,32 @@
 a generic visitor abstract implementation
 """
 
+
 def no_filter(_):
     return 1
 
 
 # Iterators ###################################################################
 class FilteredIterator(object):
-
     def __init__(self, node, list_func, filter_func=None):
         self._next = [(node, 0)]
         if filter_func is None:
             filter_func = no_filter
         self._list = list_func(node, filter_func)
-        
+
     def next(self):
         try:
             return self._list.pop(0)
-        except :
+        except:
             return None
 
 
 # Base Visitor ################################################################
 class Visitor(object):
-
     def __init__(self, iterator_class, filter_func=None):
         self._iter_class = iterator_class
         self.filter = filter_func
-        
+
     def visit(self, node, *args, **kargs):
         """
         launch the visit on a given node
@@ -64,13 +63,13 @@ class Visitor(object):
 
     def _get_iterator(self, node):
         return self._iter_class(node, self.filter)
-        
+
     def open_visit(self, *args, **kargs):
         """
         method called at the beginning of the visit
         """
         pass
-    
+
     def close_visit(self, result):
         """
         method called at the end of the visit
@@ -78,12 +77,12 @@ class Visitor(object):
         return result
 
 
-
 # standard visited mixin ######################################################
 class VisitedMixIn(object):
     """
     Visited interface allow node visitors to use the node
     """
+
     def get_visit_name(self):
         """
         return the visit name for the mixed class. When calling 'accept', the
@@ -94,11 +93,11 @@ class VisitedMixIn(object):
             return self.TYPE.replace('-', '_')
         except:
             return self.__class__.__name__.lower()
-    
+
     def accept(self, visitor, *args, **kwargs):
         func = getattr(visitor, 'visit_%s' % self.get_visit_name())
         return func(self, *args, **kwargs)
-    
+
     def leave(self, visitor, *args, **kwargs):
         func = getattr(visitor, 'leave_%s' % self.get_visit_name())
         return func(self, *args, **kwargs)

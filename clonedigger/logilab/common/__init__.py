@@ -32,8 +32,6 @@ STD_BLACKLIST = ('CVS', '.svn', '.hg', 'debian', 'dist', 'build')
 
 IGNORED_EXTENSIONS = ('.pyc', '.pyo', '.elc', '~')
 
-
-
 from clonedigger.logilab.common.deprecation import moved
 
 get_cycles = moved('logilab.common.graph', 'get_cycles')
@@ -44,6 +42,7 @@ acquire_lock = moved('logilab.common.shellutils', 'acquire_lock')
 release_lock = moved('logilab.common.shellutils', 'release_lock')
 deprecated_function = moved('logilab.common.deprecation', 'deprecated_function')
 class_renamed = moved('logilab.common.deprecation', 'class_renamed')
+
 
 def intersection(list1, list2):
     """return the intersection of list1 and list2"""
@@ -57,6 +56,7 @@ def intersection(list1, list2):
             result.append(item)
     return result
 
+
 def difference(list1, list2):
     """return elements of list1 not in list2"""
     warn('this function is deprecated, use a set instead', DeprecationWarning,
@@ -68,6 +68,7 @@ def difference(list1, list2):
         if not tmp.has_key(i):
             result.append(i)
     return result
+
 
 def union(list1, list2):
     """return list1 union list2"""
@@ -83,12 +84,14 @@ def union(list1, list2):
 
 class attrdict(dict):
     """a dictionary whose keys are also accessible as attributes"""
+
     def __getattr__(self, attr):
         try:
             return self[attr]
         except KeyError:
             raise AttributeError(attr)
-        
+
+
 class nullobject(object):
     def __nonzero__(self):
         return False
@@ -151,7 +154,7 @@ def make_domains(lists):
     for iterable in lists:
         new_domain = iterable[:]
         for i in range(len(domains)):
-            domains[i] = domains[i]*len(iterable)
+            domains[i] = domains[i] * len(iterable)
         if domains:
             missing = (len(domains[0]) - len(iterable)) / len(iterable)
             i = 0

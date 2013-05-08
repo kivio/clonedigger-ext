@@ -20,48 +20,50 @@ import math
 
 try:
     from mx.DateTime import RelativeDateTime, strptime, Date
+
     STEP = 1
 except ImportError:
     from warnings import warn
+
     warn("mxDateTime not found, holiday management won't be available")
     from datetime import timedelta
+
     STEP = timedelta(days=1)
 else:
     endOfMonth = RelativeDateTime(months=1, day=-1)
 
     FRENCH_FIXED_HOLIDAYS = {
-        'jour_an'        : '%s-01-01',
-        'fete_travail'   : '%s-05-01',
-        'armistice1945'  : '%s-05-08',
-        'fete_nat'       : '%s-07-14',
-        'assomption'     : '%s-08-15',
-        'toussaint'      : '%s-11-01',
-        'armistice1918'  : '%s-11-11',
-        'noel'           : '%s-12-25',
-        }
-
+        'jour_an': '%s-01-01',
+        'fete_travail': '%s-05-01',
+        'armistice1945': '%s-05-08',
+        'fete_nat': '%s-07-14',
+        'assomption': '%s-08-15',
+        'toussaint': '%s-11-01',
+        'armistice1918': '%s-11-11',
+        'noel': '%s-12-25',
+    }
 
     FRENCH_MOBILE_HOLIDAYS = {
-        'paques2004'    : '2004-04-12',
-        'ascension2004' : '2004-05-20',
-        'pentecote2004' : '2004-05-31',
+        'paques2004': '2004-04-12',
+        'ascension2004': '2004-05-20',
+        'pentecote2004': '2004-05-31',
 
-        'paques2005'    : '2005-03-28',
-        'ascension2005' : '2005-05-05',
-        'pentecote2005' : '2005-05-16',
+        'paques2005': '2005-03-28',
+        'ascension2005': '2005-05-05',
+        'pentecote2005': '2005-05-16',
 
-        'paques2006'    : '2006-04-17',
-        'ascension2006' : '2006-05-25',
-        'pentecote2006' : '2006-06-05',
+        'paques2006': '2006-04-17',
+        'ascension2006': '2006-05-25',
+        'pentecote2006': '2006-06-05',
 
-        'paques2007'    : '2007-04-09',
-        'ascension2007' : '2007-05-17',
-        'pentecote2007' : '2007-05-28',
+        'paques2007': '2007-04-09',
+        'ascension2007': '2007-05-17',
+        'pentecote2007': '2007-05-28',
 
-        'paques2008'    : '2008-03-24',
-        'ascension2008' : '2008-05-01',
-        'pentecote2008' : '2008-05-12',
-        }
+        'paques2008': '2008-03-24',
+        'ascension2008': '2008-05-01',
+        'pentecote2008': '2008-05-12',
+    }
 
     def get_national_holidays(begin, end):
         """return french national days off between begin and end"""
@@ -69,7 +71,7 @@ else:
         end = Date(end.year, end.month, end.day)
         holidays = [strptime(datestr, '%Y-%m-%d')
                     for datestr in FRENCH_MOBILE_HOLIDAYS.values()]
-        for year in xrange(begin.year, end.year+1):
+        for year in xrange(begin.year, end.year + 1):
             for datestr in FRENCH_FIXED_HOLIDAYS.values():
                 date = strptime(datestr % year, '%Y-%m-%d')
                 if date not in holidays:
@@ -80,10 +82,10 @@ else:
     def add_days_worked(start, days):
         """adds date but try to only take days worked into account"""
         weeks, plus = divmod(days, 5)
-        end = start+(weeks * 7) + plus
+        end = start + (weeks * 7) + plus
         if end.day_of_week >= 5: # saturday or sunday
             end += 2
-        end += len([x for x in get_national_holidays(start, end+1)
+        end += len([x for x in get_national_holidays(start, end + 1)
                     if x.day_of_week < 5])
         if end.day_of_week >= 5: # saturday or sunday
             end += 2
@@ -98,9 +100,9 @@ else:
         elif end.day_of_week == 6:
             plus -= 1
         open_days = weeks * 5 + plus
-        nb_week_holidays = len([x for x in get_national_holidays(start, end+1)
+        nb_week_holidays = len([x for x in get_national_holidays(start, end + 1)
                                 if x.day_of_week < 5 and x < end])
-        return open_days  - nb_week_holidays
+        return open_days - nb_week_holidays
 
 
 def date_range(begin, end, step=STEP):
@@ -111,7 +113,7 @@ def date_range(begin, end, step=STEP):
     use endOfMonth to enumerate months
     """
     date = begin
-    while date < end :
+    while date < end:
         yield date
         date += step
 

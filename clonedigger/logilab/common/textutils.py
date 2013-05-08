@@ -50,21 +50,22 @@ from os import linesep
 
 
 MANUAL_UNICODE_MAP = {
-    u'\xa1': u'!',    # INVERTED EXCLAMATION MARK
-    u'\u0142': u'l',  # LATIN SMALL LETTER L WITH STROKE
-    u'\u2044': u'/',  # FRACTION SLASH
-    u'\xc6': u'AE',   # LATIN CAPITAL LETTER AE
-    u'\xa9': u'(c)',  # COPYRIGHT SIGN
-    u'\xab': u'"',    # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    u'\xe6': u'ae',   # LATIN SMALL LETTER AE
-    u'\xae': u'(r)',  # REGISTERED SIGN
+    u'\xa1': u'!', # INVERTED EXCLAMATION MARK
+    u'\u0142': u'l', # LATIN SMALL LETTER L WITH STROKE
+    u'\u2044': u'/', # FRACTION SLASH
+    u'\xc6': u'AE', # LATIN CAPITAL LETTER AE
+    u'\xa9': u'(c)', # COPYRIGHT SIGN
+    u'\xab': u'"', # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    u'\xe6': u'ae', # LATIN SMALL LETTER AE
+    u'\xae': u'(r)', # REGISTERED SIGN
     u'\u0153': u'oe', # LATIN SMALL LIGATURE OE
     u'\u0152': u'OE', # LATIN CAPITAL LIGATURE OE
-    u'\xd8': u'O',    # LATIN CAPITAL LETTER O WITH STROKE
-    u'\xf8': u'o',    # LATIN SMALL LETTER O WITH STROKE
-    u'\xbb': u'"',    # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    u'\xdf': u'ss',   # LATIN SMALL LETTER SHARP S
-    }
+    u'\xd8': u'O', # LATIN CAPITAL LETTER O WITH STROKE
+    u'\xf8': u'o', # LATIN SMALL LETTER O WITH STROKE
+    u'\xbb': u'"', # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    u'\xdf': u'ss', # LATIN SMALL LETTER SHARP S
+}
+
 
 def unormalize(ustring, ignorenonascii=False):
     """replace diacritical characters with their corresponding ascii characters
@@ -74,13 +75,14 @@ def unormalize(ustring, ignorenonascii=False):
         try:
             replacement = MANUAL_UNICODE_MAP[letter]
         except KeyError:
-            if ord(letter) >= 2**8:
+            if ord(letter) >= 2 ** 8:
                 if ignorenonascii:
                     continue
                 raise ValueError("can't deal with non-ascii based characters")
             replacement = _uninormalize('NFD', letter)[0]
         res.append(replacement)
     return u''.join(res)
+
 
 def unquote(string):
     """remove optional quotes (simple or double) from the string
@@ -102,6 +104,7 @@ def unquote(string):
 
 _BLANKLINES_RGX = re.compile('\r?\n\r?\n')
 _NORM_SPACES_RGX = re.compile('\s+')
+
 
 def normalize_text(text, line_len=80, indent='', rest=False):
     """normalize a text to display it with a maximum line size and
@@ -162,7 +165,8 @@ def normalize_paragraph(text, line_len=80, indent=''):
         aline, text = splittext(text.strip(), line_len)
         lines.append(indent + aline)
     return linesep.join(lines)
-    
+
+
 def normalize_rest_paragraph(text, line_len=80, indent=''):
     """normalize a ReST text to display it with a maximum line size and
     optionaly arbitrary indentation. Line jumps are normalized. The
@@ -203,6 +207,7 @@ def normalize_rest_paragraph(text, line_len=80, indent=''):
             lines.append(indent + line.strip())
     return linesep.join(lines)
 
+
 def splittext(text, line_len):
     """split the given text on space according to the given max line size
     
@@ -212,14 +217,14 @@ def splittext(text, line_len):
     """
     if len(text) <= line_len:
         return text, ''
-    pos = min(len(text)-1, line_len)
+    pos = min(len(text) - 1, line_len)
     while pos > 0 and text[pos] != ' ':
         pos -= 1
     if pos == 0:
         pos = min(len(text), line_len)
         while len(text) > pos and text[pos] != ' ':
             pos += 1
-    return text[:pos], text[pos+1:].strip()
+    return text[:pos], text[pos + 1:].strip()
 
 
 def get_csv(string, sep=','):
@@ -244,6 +249,7 @@ def get_csv(string, sep=','):
 
 
 _LINE_RGX = re.compile('\r\n|\r+|\n')
+
 
 def pretty_match(match, string, underline_char='^'):
     """return a string with the match location underlined:
@@ -304,24 +310,24 @@ ANSI_PREFIX = '\033['
 ANSI_END = 'm'
 ANSI_RESET = '\033[0m'
 ANSI_STYLES = {
-    'reset'     : "0",
-    'bold'      : "1",
-    'italic'    : "3",
-    'underline' : "4",
-    'blink'     : "5",
-    'inverse'   : "7",
-    'strike'    : "9",
+    'reset': "0",
+    'bold': "1",
+    'italic': "3",
+    'underline': "4",
+    'blink': "5",
+    'inverse': "7",
+    'strike': "9",
 }
 ANSI_COLORS = {
-    'reset'   : "0",
-    'black'   : "30",
-    'red'     : "31",
-    'green'   : "32",
-    'yellow'  : "33",
-    'blue'    : "34",
-    'magenta' : "35",
-    'cyan'    : "36",
-    'white'   : "37",
+    'reset': "0",
+    'black': "30",
+    'red': "31",
+    'green': "32",
+    'yellow': "33",
+    'blue': "34",
+    'magenta': "35",
+    'cyan': "36",
+    'white': "37",
 }
 
 
@@ -352,6 +358,7 @@ def _get_ansi_code(color=None, style=None):
     if ansi_code:
         return ANSI_PREFIX + ';'.join(ansi_code) + ANSI_END
     return ''
+
 
 def colorize_ansi(msg, color=None, style=None):
     """colorize message by wrapping it with ansi escape codes

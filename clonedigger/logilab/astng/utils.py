@@ -25,6 +25,7 @@ __docformat__ = "restructuredtext en"
 from clonedigger.logilab.common.compat import enumerate
 from clonedigger.logilab.astng._exceptions import IgnoreChild
 
+
 def extend_class(original, addons):
     """add methods and attribute defined in the addons class to the original
     class
@@ -34,7 +35,8 @@ def extend_class(original, addons):
         if special_key in addons.__dict__:
             del brain[special_key]
     original.__dict__.update(brain)
-        
+
+
 class ASTWalker:
     """a walker visiting a tree in preorder, calling on the handler:
     
@@ -44,14 +46,15 @@ class ASTWalker:
     * leave_<class name> on leaving a node, where class name is the class of
     the node in lower case
     """
+
     def __init__(self, handler):
         self.handler = handler
         self._cache = {}
-        
+
     def walk(self, node):
         """walk on the tree from <node>, getting callbacks from handler
         """
-        try:            
+        try:
             self.visit(node)
         except IgnoreChild:
             pass
@@ -70,19 +73,19 @@ class ASTWalker:
             kid = klass.__name__.lower()
             e_method = getattr(handler, 'visit_%s' % kid,
                                getattr(handler, 'visit_default', None))
-            l_method = getattr(handler, 'leave_%s' % kid, 
+            l_method = getattr(handler, 'leave_%s' % kid,
                                getattr(handler, 'leave_default', None))
             self._cache[klass] = (e_method, l_method)
         else:
             e_method, l_method = methods
         return e_method, l_method
-    
+
     def visit(self, node):
         """walk on the tree from <node>, getting callbacks from handler"""
         method = self.get_callbacks(node)[0]
         if method is not None:
             method(node)
-            
+
     def leave(self, node):
         """walk on the tree from <node>, getting callbacks from handler"""
         method = self.get_callbacks(node)[1]
@@ -92,10 +95,11 @@ class ASTWalker:
 
 class LocalsVisitor(ASTWalker):
     """visit a project by traversing the locals dictionnary"""
+
     def __init__(self):
         ASTWalker.__init__(self, self)
         self._visited = {}
-        
+
     def visit(self, node):
         """launch the visit starting from the given node"""
         if self._visited.has_key(node):
@@ -114,6 +118,7 @@ class LocalsVisitor(ASTWalker):
                     self.visit(local_node)
         if methods[1] is not None:
             return methods[1](node)
+
 
 def are_exclusive(stmt1, stmt2):
     """return true if the two given statement are mutually exclusive
@@ -135,7 +140,7 @@ def are_exclusive(stmt1, stmt2):
         children[node] = previous
         previous = node
         node = node.parent
-    # climb among stmt2's parents until we find a common parent
+        # climb among stmt2's parents until we find a common parent
     node = stmt2.parent
     previous = stmt2
     while node:
@@ -152,9 +157,9 @@ def are_exclusive(stmt1, stmt2):
                     stmt2_branch, stmt2_num = _try_except_from_branch(node, previous)
                     if stmt1_branch != stmt1_branch:
                         if not ((stmt2_branch == 'body' and stmt1_branch == 'else') or
-                                (stmt1_branch == 'body' and stmt2_branch == 'else') or
-                                (stmt2_branch == 'body' and stmt1_branch == 'except') or
-                                (stmt1_branch == 'body' and stmt2_branch == 'except')):
+                                    (stmt1_branch == 'body' and stmt2_branch == 'else') or
+                                    (stmt2_branch == 'body' and stmt1_branch == 'except') or
+                                    (stmt1_branch == 'body' and stmt2_branch == 'except')):
                             return True
                     elif stmt1_num != stmt2_num:
                         return True
@@ -162,6 +167,7 @@ def are_exclusive(stmt1, stmt2):
         previous = node
         node = node.parent
     return False
+
 
 def _try_except_from_branch(node, stmt):
     if stmt is node.body:

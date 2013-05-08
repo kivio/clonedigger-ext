@@ -47,6 +47,7 @@ class Command(Configuration):
     # max/min args, None meaning unspecified
     min_args = None
     max_args = None
+
     def __init__(self, __doc__=None, version=None):
         if __doc__:
             usage = __doc__ % (self.name, self.arguments,
@@ -61,7 +62,7 @@ class Command(Configuration):
             raise BadCommandUsage('missing argument')
         if self.max_args is not None and len(args) > self.max_args:
             raise BadCommandUsage('too many arguments')
-        
+
     def run(self, args):
         """run the command with its specific arguments"""
         raise NotImplementedError()
@@ -79,6 +80,7 @@ def pop_arg(args_list, expected_size_after=0, msg="Missing argument"):
 
 
 _COMMANDS = {}
+
 
 def register_commands(commands):
     """register existing commands"""
@@ -99,12 +101,12 @@ command. Available commands are :\n''')
     doc = doc.replace('%prog', basename(sys.argv[0]))
     print 'usage:', doc
     max_len = max([len(cmd) for cmd in commands]) # list comprehension for py 2.3 support
-    padding = ' '*max_len
+    padding = ' ' * max_len
     for command in commands:
         cmd = _COMMANDS[command]
         if not cmd.hidden:
             title = cmd.__doc__.split('.')[0]
-            print ' ', (command+padding)[:max_len], title
+            print ' ', (command + padding)[:max_len], title
     print '\n', copyright
     sys.exit(status)
 
@@ -124,7 +126,7 @@ def cmd_run(cmdname, *args):
         print 'ERROR: ', err
         print command.help()
 
-        
+
 def main_run(args, doc):
     """command line tool"""
     try:
@@ -143,9 +145,9 @@ def main_run(args, doc):
 class ListCommandsCommand(Command):
     """list available commands, useful for bash completion."""
     name = 'listcommands'
-    arguments = '[command]'    
+    arguments = '[command]'
     hidden = True
-    
+
     def run(self, args):
         """run the command with its specific arguments"""
         if args:
@@ -161,5 +163,6 @@ class ListCommandsCommand(Command):
                 cmd = _COMMANDS[command]
                 if not cmd.hidden:
                     print command
-                
+
+
 register_commands([ListCommandsCommand])

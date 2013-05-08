@@ -65,24 +65,23 @@ pytest --coverage test_foo.py
   (only if logilab.devtools is available)
 """
 
-import os, sys
+import os
+import sys
 import os.path as osp
 from time import time, clock
+import doctest
+import unittest
+import imp
+import __builtin__
 
 from clonedigger.logilab.common.fileutils import abspath_listdir
 from clonedigger.logilab.common import testlib
-import doctest
-import unittest
-
-
-import imp
-
-import __builtin__
 
 
 try:
     import django
     from clonedigger.logilab.common.modutils import modpath_from_file, load_module_from_modpath
+
     DJANGO_FOUND = True
 except ImportError:
     DJANGO_FOUND = False
@@ -102,6 +101,7 @@ class TraceController(object):
             sys.__notrace__ = True
             cls.tracefunc(None)
         cls.nesting += 1
+
     pause_tracing = classmethod(pause_tracing)
 
     def resume_tracing(cls):
@@ -110,8 +110,9 @@ class TraceController(object):
         if not cls.nesting:
             cls.tracefunc(cls.oldtracer)
             delattr(sys, '__notrace__')
+
     resume_tracing = classmethod(resume_tracing)
-    
+
 
 pause_tracing = TraceController.pause_tracing
 resume_tracing = TraceController.resume_tracing
@@ -121,12 +122,14 @@ def nocoverage(func):
     if hasattr(func, 'uncovered'):
         return func
     func.uncovered = True
+
     def not_covered(*args, **kwargs):
         pause_tracing()
         try:
             return func(*args, **kwargs)
         finally:
             resume_tracing()
+
     not_covered.uncovered = True
     return not_covered
 
@@ -147,15 +150,14 @@ else:
     unittest.FunctionTestCase.__bases__ = (testlib.TestCase,)
 
 
-
 def this_is_a_testfile(filename):
     """returns True if `filename` seems to be a test file"""
     filename = osp.basename(filename)
     return ((filename.startswith('unittest')
              or filename.startswith('test')
-             or filename.startswith('smoketest')) 
+             or filename.startswith('smoketest'))
             and filename.endswith('.py'))
-    
+
 
 def this_is_a_testdir(dirpath):
     """returns True if `filename` seems to be a test directory"""
@@ -182,7 +184,7 @@ def project_root(parser, projdir=os.getcwd()):
     if osp.isfile(conf_file_path):
         testercls = load_pytest_conf(conf_file_path, parser)
     while this_is_a_testdir(curdir) or \
-              osp.isfile(osp.join(curdir, '__init__.py')):
+            osp.isfile(osp.join(curdir, '__init__.py')):
         newdir = osp.normpath(osp.join(curdir, os.pardir))
         if newdir == curdir:
             break
@@ -196,6 +198,7 @@ def project_root(parser, projdir=os.getcwd()):
 
 class GlobalTestReport(object):
     """this class holds global test statistics"""
+
     def __init__(self):
         self.ran = 0
         self.skipped = 0
@@ -226,8 +229,8 @@ class GlobalTestReport(object):
         """
         self.errors += 1
         self.errmodules.append((filename[:-3], 1, 1))
-        
-    
+
+
     def __str__(self):
         """this is just presentation stuff"""
         line1 = ['Ran %s test cases in %.2fs (%.2fs CPU)'
@@ -250,7 +253,6 @@ class GlobalTestReport(object):
         else:
             return ''
         return '%s\n%s%s' % (', '.join(line1), line2, line3)
-
 
 
 def remove_local_modules_from_sys(testdir):
@@ -279,10 +281,9 @@ def remove_local_modules_from_sys(testdir):
             del sys.modules[modname]
 
 
-
 class PyTester(object):
     """encaspulates testrun logic"""
-    
+
     def __init__(self, cvg, options):
         self.tested_files = []
         self.report = GlobalTestReport()
@@ -295,7 +296,7 @@ class PyTester(object):
         print "*" * 79
         print self.report
         return self.report.failures + self.report.errors
-        
+
 
     def testall(self, exitfirst=False):
         """walks trhough current working directory, finds something
@@ -312,7 +313,7 @@ class PyTester(object):
                 self.testonedir(dirname, exitfirst)
                 dirs[:] = []
 
- 
+
     def testonedir(self, testdir, exitfirst=False):
         """finds each testfile in the `testdir` and runs it"""
         for filename in abspath_listdir(testdir):
@@ -321,7 +322,7 @@ class PyTester(object):
                 prog = self.testfile(filename, batchmode=True)
                 if exitfirst and (prog is None or not prog.result.wasSuccessful()):
                     break
-        # clean local modules
+            # clean local modules
         remove_local_modules_from_sys(testdir)
 
 
@@ -336,9 +337,9 @@ class PyTester(object):
             os.chdir(dirname)
         modname = osp.basename(filename)[:-3]
         try:
-            print >>sys.stderr, ('  %s  ' % osp.basename(filename)).center(70, '=')
+            print >> sys.stderr, ('  %s  ' % osp.basename(filename)).center(70, '=')
         except TypeError: # < py 2.4 bw compat
-            print >>sys.stderr, ('  %s  ' % osp.basename(filename)).center(70)
+            print >> sys.stderr, ('  %s  ' % osp.basename(filename)).center(70)
         try:
             try:
                 tstart, cstart = time(), clock()
@@ -354,30 +355,30 @@ class PyTester(object):
                 self.report.failed_to_test_module(filename)
                 print 'unhandled exception occured while testing', modname
                 import traceback
+
                 traceback.print_exc()
-                return None                
+                return None
         finally:
             if dirname:
                 os.chdir(here)
 
 
-
 class DjangoTester(PyTester):
-
     def load_django_settings(self, dirname):
         """try to find project's setting and load it"""
         curdir = osp.abspath(dirname)
         previousdir = curdir
         while not osp.isfile(osp.join(curdir, 'settings.py')) and \
-                  osp.isfile(osp.join(curdir, '__init__.py')):
+                osp.isfile(osp.join(curdir, '__init__.py')):
             newdir = osp.normpath(osp.join(curdir, os.pardir))
             if newdir == curdir:
                 raise AssertionError('could not find settings.py')
             previousdir = curdir
             curdir = newdir
-        # late django initialization
+            # late django initialization
         settings = load_module_from_modpath(modpath_from_file(osp.join(curdir, 'settings.py')))
         from django.core.management import setup_environ
+
         setup_environ(settings)
         settings.DEBUG = False
         self.settings = settings
@@ -389,19 +390,21 @@ class DjangoTester(PyTester):
         # Those imports must be done **after** setup_environ was called
         from django.test.utils import setup_test_environment
         from django.test.utils import create_test_db
+
         setup_test_environment()
         create_test_db(verbosity=0)
         self.dbname = self.settings.TEST_DATABASE_NAME
-        
+
 
     def after_testfile(self):
         # Those imports must be done **after** setup_environ was called
         from django.test.utils import teardown_test_environment
         from django.test.utils import destroy_test_db
+
         teardown_test_environment()
         print 'destroying', self.dbname
         destroy_test_db(self.dbname, verbosity=0)
-        
+
 
     def testall(self, exitfirst=False):
         """walks trhough current working directory, finds something
@@ -439,7 +442,7 @@ class DjangoTester(PyTester):
             prog = self.testfile(filename, batchmode=True)
             if exitfirst and (prog is None or not prog.result.wasSuccessful()):
                 break
-        # clean local modules
+            # clean local modules
         remove_local_modules_from_sys(testdir)
 
 
@@ -454,7 +457,7 @@ class DjangoTester(PyTester):
             os.chdir(dirname)
         self.load_django_settings(dirname)
         modname = osp.basename(filename)[:-3]
-        print >>sys.stderr, ('  %s  ' % osp.basename(filename)).center(70, '=')
+        print >> sys.stderr, ('  %s  ' % osp.basename(filename)).center(70, '=')
         try:
             try:
                 tstart, cstart = time(), clock()
@@ -468,11 +471,12 @@ class DjangoTester(PyTester):
                 raise
             except Exception, exc:
                 import traceback
+
                 traceback.print_exc()
                 self.report.failed_to_test_module(filename)
                 print 'unhandled exception occured while testing', modname
                 print 'error: %s' % exc
-                return None                
+                return None
         finally:
             self.after_testfile()
             if dirname:
@@ -483,13 +487,15 @@ def make_parser():
     """creates the OptionParser instance
     """
     from optparse import OptionParser
+
     parser = OptionParser(usage=PYTEST_DOC)
 
     parser.newargs = []
+
     def rebuild_cmdline(option, opt, value, parser):
         """carry the option to unittest_main"""
         parser.newargs.append(opt)
-        
+
 
     def rebuild_and_store(option, opt, value, parser):
         """carry the option to unittest_main and store
@@ -512,25 +518,25 @@ def make_parser():
     parser.add_option('-x', '--exitfirst', callback=rebuild_and_store,
                       dest="exitfirst",
                       action="callback", help="Exit on first failure "
-                      "(only make sense when pytest run one test file)")
+                                              "(only make sense when pytest run one test file)")
     parser.add_option('-c', '--capture', callback=rebuild_cmdline,
-                      action="callback", 
+                      action="callback",
                       help="Captures and prints standard out/err only on errors "
-                      "(only make sense when pytest run one test file)")
+                           "(only make sense when pytest run one test file)")
     parser.add_option('-p', '--printonly',
                       # XXX: I wish I could use the callback action but it
                       #      doesn't seem to be able to get the value
                       #      associated to the option
                       action="store", dest="printonly", default=None,
                       help="Only prints lines matching specified pattern (implies capture) "
-                      "(only make sense when pytest run one test file)")
+                           "(only make sense when pytest run one test file)")
     parser.add_option('-s', '--skip',
                       # XXX: I wish I could use the callback action but it
                       #      doesn't seem to be able to get the value
                       #      associated to the option
                       action="store", dest="skipped", default=None,
                       help="test names matching this name will be skipped "
-                      "to skip several patterns, use commas")
+                           "to skip several patterns, use commas")
     parser.add_option('-q', '--quiet', callback=rebuild_cmdline,
                       action="callback", help="Minimal output")
     parser.add_option('-P', '--profile', default=None, dest='profile',
@@ -538,6 +544,7 @@ def make_parser():
 
     try:
         from clonedigger.logilab.devtools.lib.coverage import Coverage
+
         parser.add_option('--coverage', dest="coverage", default=False,
                           action="store_true",
                           help="run tests with pycoverage (conflicts with --pdb)")
@@ -567,18 +574,17 @@ def parseargs(parser):
         args.remove(explicitfile)
     else:
         explicitfile = None
-    # someone wants DBC
+        # someone wants DBC
     testlib.ENABLE_DBC = options.dbc
     newargs = parser.newargs
     if options.printonly:
         newargs.extend(['--printonly', options.printonly])
     if options.skipped:
         newargs.extend(['--skip', options.skipped])
-    # append additional args to the new sys.argv and let unittest_main
+        # append additional args to the new sys.argv and let unittest_main
     # do the rest
     newargs += args
-    return options, explicitfile 
-
+    return options, explicitfile
 
 
 def run():
@@ -590,10 +596,11 @@ def run():
     covermode = getattr(options, 'coverage', None)
     cvg = None
     if not '' in sys.path:
-        sys.path.insert(0, '')    
+        sys.path.insert(0, '')
     if covermode:
         # control_import_coverage(rootdir)
         from clonedigger.logilab.devtools.lib.coverage import Coverage
+
         cvg = Coverage([rootdir])
         cvg.erase()
         cvg.start()
@@ -611,16 +618,18 @@ def run():
         try:
             if options.profile:
                 import hotshot
+
                 prof = hotshot.Profile(options.profile)
                 prof.runcall(cmd, *args)
                 prof.close()
                 print 'profile data saved in', options.profile
             else:
-                 cmd(*args)           
+                cmd(*args)
         except SystemExit:
             raise
         except:
             import traceback
+
             traceback.print_exc()
     finally:
         errcode = tester.show_report()

@@ -50,6 +50,7 @@ def lookup(self, name):
     #assert ID_RGX.match(name), '%r is not a valid identifier' % name
     return self.scope().scope_lookup(self, name)
 
+
 def scope_lookup(self, node, name, offset=0):
     try:
         stmts = node._filter_stmts(self.locals[name], self, offset)
@@ -66,6 +67,7 @@ def scope_lookup(self, node, name, offset=0):
         return pscope.scope_lookup(node, name)
     return builtin_lookup(name)
 
+
 def class_scope_lookup(self, node, name, offset=0):
     if node in self.bases:
         #print 'frame swaping'
@@ -77,6 +79,7 @@ def class_scope_lookup(self, node, name, offset=0):
         frame = self
     return scope_lookup(frame, node, name, offset)
 
+
 def function_scope_lookup(self, node, name, offset=0):
     if node in self.defaults:
         frame = self.parent.frame()
@@ -87,7 +90,8 @@ def function_scope_lookup(self, node, name, offset=0):
         # check this is not used in function decorators
         frame = self
     return scope_lookup(frame, node, name, offset)
-    
+
+
 def builtin_lookup(name):
     """lookup a name into the builtin module
     return the list of matching statements and the astng for the builtin
@@ -99,6 +103,7 @@ def builtin_lookup(name):
     except KeyError:
         stmts = ()
     return builtinastng, stmts
+
 
 def ilookup(self, name, context=None):
     """infered lookup
@@ -130,7 +135,7 @@ def _filter_stmts(self, stmts, frame, offset):
         myframe = self.frame()
     if not myframe is frame or self is frame:
         return stmts
-    #print self.name, frame.name
+        #print self.name, frame.name
     mystmt = self.statement()
     # line filtering if we are in the same frame
     if myframe is frame:
@@ -155,7 +160,7 @@ def _filter_stmts(self, stmts, frame, offset):
         try:
             ass_type = node.ass_type()
             if ass_type is mystmt:
-                if not isinstance(ass_type, (ListCompFor,  GenExprFor)):
+                if not isinstance(ass_type, (ListCompFor, GenExprFor)):
                     #print 'break now2', self, ass_type
                     break
                 if isinstance(self, (Const, Name)):
@@ -164,9 +169,9 @@ def _filter_stmts(self, stmts, frame, offset):
                     break
         except AttributeError:
             ass_type = None
-        # a loop assigment is hidding previous assigment
-        if isinstance(ass_type, (For, ListCompFor,  GenExprFor)) and \
-               ass_type.parent_of(self):
+            # a loop assigment is hidding previous assigment
+        if isinstance(ass_type, (For, ListCompFor, GenExprFor)) and \
+                ass_type.parent_of(self):
             _stmts = [node]
             _stmt_parents = [stmt.parent]
             continue
@@ -196,12 +201,12 @@ def _filter_stmts(self, stmts, frame, offset):
                 _stmts = []
                 _stmt_parents = []
                 continue
-                
+
         if not are_exclusive(self, node):
             #print 'append', node, node.source_line()
             _stmts.append(node)
             _stmt_parents.append(stmt.parent)
-    #print '->', _stmts
+        #print '->', _stmts
     stmts = _stmts
     return stmts
 

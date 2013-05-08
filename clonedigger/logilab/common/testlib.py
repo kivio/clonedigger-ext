@@ -23,7 +23,8 @@ If no non-option arguments are present, prefixes used are 'test',
 
 """
 import sys
-import os, os.path as osp
+import os
+import os.path as osp
 import re
 import time
 import getopt
@@ -33,6 +34,8 @@ import difflib
 import types
 from warnings import warn
 from compiler.consts import CO_GENERATOR
+
+
 try:
     import readline
 except ImportError:
@@ -47,10 +50,11 @@ except ImportError:
     class TestSupport:
         def unload(self, test):
             pass
+
     test_support = TestSupport()
 
 from clonedigger.logilab.common.deprecation import class_renamed, deprecated_function, \
-     obsolete
+    obsolete
 from clonedigger.logilab.common.compat import set, enumerate, any
 from clonedigger.logilab.common.modutils import load_module_from_name
 from clonedigger.logilab.common.debugger import Debugger
@@ -62,6 +66,7 @@ DEFAULT_PREFIXES = ('test', 'regrtest', 'smoketest', 'unittest',
                     'func', 'validation')
 
 ENABLE_DBC = False
+
 
 def main(testdir=None, exitafter=True):
     """Execute a test suite.
@@ -126,6 +131,7 @@ def main(testdir=None, exitafter=True):
     if profile:
         print >> sys.stderr, '** profiled run'
         from hotshot import Profile
+
         prof = Profile('stones.prof')
         start_time, start_ctime = time.time(), time.clock()
         good, bad, skipped, all_result = prof.runcall(run_tests, tests, quiet,
@@ -137,11 +143,11 @@ def main(testdir=None, exitafter=True):
         good, bad, skipped, all_result = run_tests(tests, quiet, verbose, None, capture)
         end_time, end_ctime = time.time(), time.clock()
     if not quiet:
-        print '*'*80
+        print '*' * 80
         if all_result:
             print 'Ran %s test cases in %0.2fs (%0.2fs CPU)' % (all_result.testsRun,
                                                                 end_time - start_time,
-                                                                end_ctime - start_ctime), 
+                                                                end_ctime - start_ctime),
             if all_result.errors:
                 print ', %s errors' % len(all_result.errors),
             if all_result.failures:
@@ -161,6 +167,7 @@ def main(testdir=None, exitafter=True):
             print ', '.join(['%s (%s)' % (test, msg) for test, msg in skipped])
     if profile:
         from hotshot import stats
+
         stats = stats.load('stones.prof')
         stats.sort_stats('time', 'calls')
         stats.print_stats(30)
@@ -169,6 +176,8 @@ def main(testdir=None, exitafter=True):
     else:
         sys.path.pop(0)
         return len(bad)
+
+
 main = obsolete("testlib.main() is obsolete, use the pytest tool instead")(main)
 
 
@@ -185,13 +194,13 @@ def run_tests(tests, quiet, verbose, runner=None, capture=0):
     all_result = None
     for test in tests:
         if not quiet:
-            print 
-            print '-'*80
+            print
+            print '-' * 80
             print "Executing", test
         result = run_test(test, verbose, runner, capture)
         if type(result) is type(''):
             # an unexpected error occured
-            skipped.append( (test, result))
+            skipped.append((test, result))
         else:
             if all_result is None:
                 all_result = result
@@ -204,13 +213,14 @@ def run_tests(tests, quiet, verbose, runner=None, capture=0):
                 bad.append(test)
                 if verbose:
                     print "test", test, \
-                          "failed -- %s errors, %s failures" % (
-                        len(result.errors), len(result.failures))
+                        "failed -- %s errors, %s failures" % (
+                            len(result.errors), len(result.failures))
             else:
                 good.append(test)
-            
+
     return good, bad, skipped, all_result
-    
+
+
 def find_tests(testdir,
                prefixes=DEFAULT_PREFIXES, suffix=".py",
                excludes=(),
@@ -241,7 +251,7 @@ def run_test(test, verbose, runner=None, capture=0):
     test_support.unload(test)
     try:
         m = load_module_from_name(test, path=sys.path)
-#        m = __import__(test, globals(), locals(), sys.path)
+        #        m = __import__(test, globals(), locals(), sys.path)
         try:
             suite = m.suite
             if callable(suite):
@@ -262,6 +272,7 @@ def run_test(test, verbose, runner=None, capture=0):
             traceback.print_exc()
         return msg
 
+
 def _count(n, word):
     """format word according to n"""
     if n == 1:
@@ -269,8 +280,6 @@ def _count(n, word):
     else:
         return "%d %ss" % (n, word)
 
-
-    
 
 ## PostMortem Debug facilities #####
 def start_interactive_mode(result):
@@ -310,8 +319,8 @@ def start_interactive_mode(result):
 # test utils ##################################################################
 from cStringIO import StringIO
 
-class SkipAwareTestResult(unittest._TextTestResult):
 
+class SkipAwareTestResult(unittest._TextTestResult):
     def __init__(self, stream, descriptions, verbosity,
                  exitfirst=False, capture=0, printonly=None,
                  pdbmode=False, cvg=None):
@@ -330,12 +339,12 @@ class SkipAwareTestResult(unittest._TextTestResult):
 
     def descrs_for(self, flavour):
         return getattr(self, '%s_descrs' % flavour.lower())
-    
+
     def _create_pdb(self, test_descr, flavour):
-        self.descrs_for(flavour).append( (len(self.debuggers), test_descr) )
+        self.descrs_for(flavour).append((len(self.debuggers), test_descr))
         if self.pdbmode:
             self.debuggers.append(self.pdbclass(sys.exc_info()[2]))
-        
+
     def addError(self, test, err):
         exc_type, exc, tcbk = err
         if exc_type == TestSkipped:
@@ -364,7 +373,7 @@ class SkipAwareTestResult(unittest._TextTestResult):
     def printErrors(self):
         super(SkipAwareTestResult, self).printErrors()
         self.printSkippedList()
-        
+
     def printSkippedList(self):
         for test, descr, err in self.skipped:
             self.stream.writeln(self.separator1)
@@ -398,7 +407,6 @@ class SkipAwareTestResult(unittest._TextTestResult):
                     self.stream.writeln('no stderr'.center(len(self.separator2)))
 
 
-
 class TestSuite(unittest.TestSuite):
     def run(self, result, runcondition=None, options=None):
         for test in self._tests:
@@ -406,14 +414,13 @@ class TestSuite(unittest.TestSuite):
                 break
             test(result, runcondition, options)
         return result
-    
+
     # python2.3 compat
     def __call__(self, *args, **kwds):
         return self.run(*args, **kwds)
 
 
 class SkipAwareTextTestRunner(unittest.TextTestRunner):
-
     def __init__(self, stream=sys.stderr, verbosity=1,
                  exitfirst=False, capture=False, printonly=None,
                  pdbmode=False, cvg=None, test_pattern=None, skipped_patterns=(),
@@ -450,7 +457,7 @@ class SkipAwareTextTestRunner(unittest.TextTestRunner):
                 return True # Not sure when this happens
             if is_generator(func) and skipgenerator:
                 return True # Let inner tests decide at run time
-        # print 'testname', testname, self.test_pattern
+            # print 'testname', testname, self.test_pattern
         if self._this_is_skipped(testname):
             return False # this was explicitly skipped
         if self.test_pattern is None:
@@ -461,7 +468,7 @@ class SkipAwareTextTestRunner(unittest.TextTestRunner):
             return classpattern in klass and testpattern in name
         except ValueError:
             return self.test_pattern in testname
-    
+
     def _makeResult(self):
         return SkipAwareTestResult(self.stream, self.descriptions, self.verbosity,
                                    self.exitfirst, self.capture, self.printonly,
@@ -497,11 +504,12 @@ class SkipAwareTextTestRunner(unittest.TextTestRunner):
 class keywords(dict):
     """keyword args (**kwargs) support for generative tests"""
 
+
 class starargs(tuple):
     """variable arguments (*args) for generative tests"""
+
     def __new__(cls, *args):
         return tuple.__new__(cls, args)
-
 
 
 class NonStrictTestLoader(unittest.TestLoader):
@@ -539,7 +547,7 @@ class NonStrictTestLoader(unittest.TestLoader):
         tests = {}
         for obj in vars(module).values():
             if (issubclass(type(obj), (types.ClassType, type)) and
-                 issubclass(obj, unittest.TestCase)):
+                    issubclass(obj, unittest.TestCase)):
                 classname = obj.__name__
                 if self._this_is_skipped(classname):
                     continue
@@ -550,7 +558,7 @@ class NonStrictTestLoader(unittest.TestLoader):
                         attr = getattr(obj, attrname)
                         if callable(attr):
                             methodnames.append(attrname)
-                # keep track of class (obj) for convenience
+                    # keep track of class (obj) for convenience
                 tests[classname] = (obj, methodnames)
         return tests
 
@@ -560,11 +568,11 @@ class NonStrictTestLoader(unittest.TestLoader):
         except AttributeError:
             return []
         assert hasattr(suite, '_tests'), \
-               "%s.%s is not a valid TestSuite" % (module.__name__, suitename)
+            "%s.%s is not a valid TestSuite" % (module.__name__, suitename)
         # python2.3 does not implement __iter__ on suites, we need to return
         # _tests explicitly
         return suite._tests
-    
+
     def loadTestsFromName(self, name, module=None):
         parts = name.split('.')
         if module is None or len(parts) > 2:
@@ -608,7 +616,7 @@ class NonStrictTestLoader(unittest.TestLoader):
         testnames = super(NonStrictTestLoader, self).getTestCaseNames(testCaseClass)
         return [testname for testname in testnames if not is_skipped(testname)]
 
-    
+
 class SkipAwareTestProgram(unittest.TestProgram):
     # XXX: don't try to stay close to unittest.py, use optparse
     USAGE = """\
@@ -631,6 +639,7 @@ Examples:
   %(progName)s MyTestCase                    - run all 'test*' test methods
                                                in MyTestCase
 """
+
     def __init__(self, module='__main__', defaultTest=None, batchmode=False,
                  cvg=None, options=None):
         self.batchmode = batchmode
@@ -639,7 +648,7 @@ Examples:
         super(SkipAwareTestProgram, self).__init__(
             module=module, defaultTest=defaultTest,
             testLoader=NonStrictTestLoader())
-    
+
     def parseArgs(self, argv):
         self.pdbmode = False
         self.exitfirst = False
@@ -648,21 +657,22 @@ Examples:
         self.skipped_patterns = []
         self.test_pattern = None
         import getopt
+
         try:
             options, args = getopt.getopt(argv[1:], 'hHvixqcp:s:',
-                                          ['help','verbose','quiet', 'pdb',
+                                          ['help', 'verbose', 'quiet', 'pdb',
                                            'exitfirst', 'capture', 'printonly=',
                                            'skip='])
             for opt, value in options:
-                if opt in ('-h','-H','--help'):
+                if opt in ('-h', '-H', '--help'):
                     self.usageExit()
                 if opt in ('-i', '--pdb'):
                     self.pdbmode = True
                 if opt in ('-x', '--exitfirst'):
                     self.exitfirst = True
-                if opt in ('-q','--quiet'):
+                if opt in ('-q', '--quiet'):
                     self.verbosity = 0
-                if opt in ('-v','--verbose'):
+                if opt in ('-v', '--verbose'):
                     self.verbosity = 2
                 if opt in ('-c', '--capture'):
                     self.capture += 1
@@ -723,12 +733,11 @@ Examples:
         self.result = result
 
 
-
-
-class FDCapture: 
+class FDCapture:
     """adapted from py lib (http://codespeak.net/py)
     Capture IO to/from a given os-level filedescriptor.
     """
+
     def __init__(self, fd, attr='stdout', printonly=None):
         self.targetfd = fd
         self.tmpfile = os.tmpfile() # self.maketempfile()
@@ -750,14 +759,14 @@ class FDCapture:
                 self.tmpfile.write(line)
             else:
                 os.write(self._savefd, line)
-        
-##     def maketempfile(self):
-##         tmpf = os.tmpfile()
-##         fd = os.dup(tmpf.fileno())
-##         newf = os.fdopen(fd, tmpf.mode, 0) # No buffering
-##         tmpf.close()
-##         return newf
-        
+
+            ##     def maketempfile(self):
+            ##         tmpf = os.tmpfile()
+            ##         fd = os.dup(tmpf.fileno())
+            ##         newf = os.fdopen(fd, tmpf.mode, 0) # No buffering
+            ##         tmpf.close()
+            ##         return newf
+
     def restore(self):
         """restore original fd and returns captured output"""
         # hack hack hack
@@ -769,7 +778,7 @@ class FDCapture:
             pass
         if hasattr(self.oldval, 'flush'):
             self.oldval.flush()
-        # restore original file descriptor
+            # restore original file descriptor
         os.dup2(self._savefd, self.targetfd)
         # restore sys module
         setattr(sys, self.attr, self.oldval)
@@ -790,7 +799,8 @@ def _capture(which='stdout', printonly=None):
     else:
         fd = 2
     return FDCapture(fd, which, printonly)
-    
+
+
 def capture_stdout(printonly=None):
     """captures the standard output
 
@@ -798,7 +808,8 @@ def capture_stdout(printonly=None):
     The restore() method returns the captured stdout and restores it
     """
     return _capture('stdout', printonly)
-        
+
+
 def capture_stderr(printonly=None):
     """captures the standard error output
 
@@ -814,8 +825,10 @@ def unittest_main(module='__main__', defaultTest=None,
     as unittest.main"""
     return SkipAwareTestProgram(module, defaultTest, batchmode, cvg, options)
 
+
 class TestSkipped(Exception):
     """raised when a test is skipped"""
+
 
 def is_generator(function):
     flags = function.func_code.co_flags
@@ -846,17 +859,19 @@ def parse_generative_args(params):
 
     return args, kwargs
 
+
 class InnerTest(tuple):
     def __new__(cls, name, *data):
         instance = tuple.__new__(cls, data)
         instance.name = name
         return instance
 
+
 class ClassGetProperty(object):
     """this is a simple property-like class but for
     class attributes.
     """
-    
+
     def __init__(self, getter):
         self.getter = getter
 
@@ -869,7 +884,7 @@ class TestCase(unittest.TestCase):
 
     capture = False
     pdbclass = Debugger
-    
+
     def __init__(self, methodName='runTest'):
         super(TestCase, self).__init__(methodName)
         # internal API changed in python2.5
@@ -893,7 +908,8 @@ class TestCase(unittest.TestCase):
         """
         mod = __import__(cls.__module__)
         return osp.join(osp.dirname(osp.abspath(mod.__file__)), 'data')
-    # cache it (use a class method to cache on class since TestCase is
+
+        # cache it (use a class method to cache on class since TestCase is
     # instantiated for each test run)
     datadir = ClassGetProperty(cached(datadir))
 
@@ -910,14 +926,14 @@ class TestCase(unittest.TestCase):
 
     # override default's unittest.py feature
     def shortDescription(self):
-	"""override default unitest shortDescription to handle correctly
-	generative tests
-	"""
+        """override default unitest shortDescription to handle correctly
+        generative tests
+        """
         if self._current_test_descr is not None:
-	    return self._current_test_descr
-	return super(TestCase, self).shortDescription()
+            return self._current_test_descr
+        return super(TestCase, self).shortDescription()
 
-    
+
     def captured_output(self):
         return self._captured_stdout.strip(), self._captured_stderr.strip()
 
@@ -927,7 +943,7 @@ class TestCase(unittest.TestCase):
 
     def _stop_capture(self):
         self._force_output_restore()
-    
+
     def start_capture(self, printonly=None):
         self._out.append(capture_stdout(printonly or self._printonly))
         self._err.append(capture_stderr(printonly or self._printonly))
@@ -939,19 +955,19 @@ class TestCase(unittest.TestCase):
             self._err[-1].printonly = rgx
         else:
             self.start_capture(printonly=rgx)
-        
+
     def stop_capture(self):
         if self._out:
             _out = self._out.pop()
             _err = self._err.pop()
             return _out.restore(), _err.restore()
         return '', ''
-    
+
     def _force_output_restore(self):
         while self._out:
             self._captured_stdout += self._out.pop().restore()
             self._captured_stderr += self._err.pop().restore()
-    
+
     def quiet_run(self, result, func, *args, **kwargs):
         self._start_capture()
         try:
@@ -995,7 +1011,7 @@ class TestCase(unittest.TestCase):
         try:
             if not self.quiet_run(result, self.setUp):
                 return
-            # generative tests
+                # generative tests
             if is_generator(testMethod.im_func):
                 success = self._proceed_generative(result, testMethod, runcondition)
             else:
@@ -1011,7 +1027,6 @@ class TestCase(unittest.TestCase):
             result.stopTest(self)
 
 
-            
     def _proceed_generative(self, result, testfunc, runcondition=None):
         # cancel startTest()'s increment
         result.testsRun -= 1
@@ -1070,15 +1085,16 @@ class TestCase(unittest.TestCase):
             result.addError(self, self.__exc_info())
             return 2
         return 0
-            
+
     def defaultTestResult(self):
         return SkipAwareTestResult()
 
     def skip(self, msg=None):
         msg = msg or 'test was skipped'
         raise TestSkipped(msg)
+
     skipped_test = deprecated_function(skip)
-    
+
     def assertDictEquals(self, d1, d2):
         """compares two dicts
 
@@ -1098,13 +1114,14 @@ class TestCase(unittest.TestCase):
             msgs.append('d2 is lacking %r' % d1)
         if msgs:
             self.fail('\n'.join(msgs))
+
     assertDictEqual = assertDictEquals
 
     def assertSetEquals(self, got, expected, msg=None):
         """compares two iterables and shows difference between both"""
         got, expected = list(got), list(expected)
         if msg is None:
-	        msg1 = '%s != %s' % (got, expected)
+            msg1 = '%s != %s' % (got, expected)
         else:
             msg1 = msg
         self.assertEquals(len(got), len(expected), msg1)
@@ -1114,8 +1131,9 @@ class TestCase(unittest.TestCase):
             unexpected = got - expected
             if msg is None:
                 msg = '\tunexepected: %s\n\tmissing: %s' % (unexpected,
-                                                               missing)
+                                                            missing)
             self.fail(msg)
+
     assertSetEqual = assertSetEquals
 
     def assertListEquals(self, l1, l2, msg=None):
@@ -1129,28 +1147,32 @@ class TestCase(unittest.TestCase):
             try:
                 if _l1[0] != value:
                     from pprint import pprint
+
                     pprint(l1)
                     pprint(l2)
                     self.fail('%r != %r for index %d' % (_l1[0], value, i))
                 del _l1[0]
             except IndexError:
                 if msg is None:
-                    msg = 'l1 has only %d elements, not %s (at least %r missing)'% (i, len(l2), value)
+                    msg = 'l1 has only %d elements, not %s (at least %r missing)' % (i, len(l2), value)
                 self.fail(msg)
         if _l1:
             if msg is None:
                 msg = 'l2 is lacking %r' % _l1
             self.fail(msg)
+
     assertListEqual = assertListEquals
-    
+
     def assertLinesEquals(self, l1, l2, msg=None):
         """assert list of lines are equal"""
         self.assertListEquals(l1.splitlines(), l2.splitlines(), msg)
+
     assertLineEqual = assertLinesEquals
 
     def assertXMLWellFormed(self, stream, msg=None):
         """asserts the XML stream is well-formed (no DTD conformance check)"""
         from xml.sax import make_parser, SAXParseException
+
         parser = make_parser()
         try:
             parser.parse(stream)
@@ -1158,6 +1180,7 @@ class TestCase(unittest.TestCase):
             if msg is None:
                 msg = 'XML stream not well formed'
             self.fail(msg)
+
     assertXMLValid = deprecated_function(assertXMLWellFormed,
                                          'assertXMLValid renamed to more precise assertXMLWellFormed')
 
@@ -1165,7 +1188,7 @@ class TestCase(unittest.TestCase):
         """asserts the XML string is well-formed (no DTD conformance check)"""
         stream = StringIO(xml_string)
         self.assertXMLWellFormed(stream, msg)
-        
+
     assertXMLStringValid = deprecated_function(
         assertXMLStringWellFormed, 'assertXMLStringValid renamed to more precise assertXMLStringWellFormed')
 
@@ -1180,28 +1203,29 @@ class TestCase(unittest.TestCase):
             # lines that don't start with a ' ' are diff ones
             if not line.startswith(' '):
                 self.fail(''.join(read + list(result)))
-        
+
     def assertTextEquals(self, text1, text2, junk=None):
         """compare two multiline strings (using difflib and splitlines())"""
         self._difftext(text1.splitlines(True), text2.splitlines(True), junk)
+
     assertTextEqual = assertTextEquals
-            
+
     def assertStreamEqual(self, stream1, stream2, junk=None):
         """compare two streams (using difflib and readlines())"""
         # if stream2 is stream2, readlines() on stream1 will also read lines
         # in stream2, so they'll appear different, although they're not
         if stream1 is stream2:
             return
-        # make sure we compare from the beginning of the stream
+            # make sure we compare from the beginning of the stream
         stream1.seek(0)
         stream2.seek(0)
         # ocmpare
         self._difftext(stream1.readlines(), stream2.readlines(), junk)
-            
+
     def assertFileEqual(self, fname1, fname2, junk=(' ', '\t')):
         """compares two files using difflib"""
         self.assertStreamEqual(file(fname1), file(fname2), junk)
-            
+
     def assertIsInstance(self, obj, klass, msg=None, strict=False):
         """compares two files using difflib"""
         if msg is None:
@@ -1240,7 +1264,9 @@ class TestCase(unittest.TestCase):
 
     assertRaises = failUnlessRaises
 
+
 import doctest
+
 
 class SkippedSuite(unittest.TestSuite):
     def test(self):
@@ -1275,10 +1301,10 @@ else:
             self.skipped = skipped
             self.original_find_tests = doctest._find_tests
             doctest._find_tests = self._find_tests
-            
+
         def _find_tests(self, module, prefix=None):
             tests = []
-            for testinfo  in self.original_find_tests(module, prefix):
+            for testinfo in self.original_find_tests(module, prefix):
                 testname, _, _, _ = testinfo
                 # testname looks like A.B.C.function_name
                 testname = testname.split('.')[-1]
@@ -1293,6 +1319,7 @@ class DocTest(TestCase):
     without this hack
     """
     skipped = ()
+
     def __call__(self, result=None, runcondition=None, options=None):
         try:
             finder = DocTestFinder(skipped=self.skipped)
@@ -1303,22 +1330,25 @@ class DocTest(TestCase):
         except AttributeError:
             suite = SkippedSuite()
         return suite.run(result)
+
     run = __call__
-    
+
     def test(self):
         """just there to trigger test execution"""
 
+
 MAILBOX = None
+
 
 class MockSMTP:
     """fake smtplib.SMTP"""
-    
+
     def __init__(self, host, port):
         self.host = host
         self.port = port
         global MAILBOX
         self.reveived = MAILBOX = []
-        
+
     def set_debuglevel(self, debuglevel):
         """ignore debug level"""
 
@@ -1332,10 +1362,10 @@ class MockSMTP:
 
 class MockConfigParser:
     """fake ConfigParser.ConfigParser"""
-    
+
     def __init__(self, options):
         self.options = options
-        
+
     def get(self, section, option):
         """return option in section"""
         return self.options[section][option]
@@ -1346,32 +1376,40 @@ class MockConfigParser:
             return self.get(section, option) or 1
         except KeyError:
             return 0
-    
+
 
 class MockConnection:
     """fake DB-API 2.0 connexion AND cursor (i.e. cursor() return self)"""
-    
+
     def __init__(self, results):
         self.received = []
         self.states = []
         self.results = results
-        
+
     def cursor(self):
         return self
+
     def execute(self, query, args=None):
-        self.received.append( (query, args) )
+        self.received.append((query, args))
+
     def fetchone(self):
         return self.results[0]
+
     def fetchall(self):
         return self.results
+
     def commit(self):
-        self.states.append( ('commit', len(self.received)) )
+        self.states.append(('commit', len(self.received)))
+
     def rollback(self):
-        self.states.append( ('rollback', len(self.received)) )
+        self.states.append(('rollback', len(self.received)))
+
     def close(self):
         pass
 
+
 MockConnexion = class_renamed('MockConnexion', MockConnection)
+
 
 def mock_object(**params):
     """creates an object using params to set attributes
@@ -1420,6 +1458,7 @@ def create_files(paths, chroot):
     for filepath in files:
         file(filepath, 'w').close()
 
+
 def enable_dbc(*args):
     """
     Without arguments, return True if contracts can be enabled and should be
@@ -1440,7 +1479,7 @@ def enable_dbc(*args):
         weaver.weave_module(arg, ContractAspect)
     return True
 
-    
+
 class AttrObject: # XXX cf mock_object
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

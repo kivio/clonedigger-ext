@@ -24,7 +24,7 @@ def cached(callableobj, keyarg=None):
     """simple decorator to cache result of method call"""
     #print callableobj, keyarg, callableobj.func_code.co_argcount
     if callableobj.func_code.co_argcount == 1 or keyarg == 0:
-        
+
         def cache_wrapper1(self, *args):
             cache = '_%s_cache_' % callableobj.__name__
             #print 'cache1?', cache
@@ -35,13 +35,14 @@ def cached(callableobj, keyarg=None):
                 value = callableobj(self, *args)
                 setattr(self, cache, value)
                 return value
+
         return cache_wrapper1
-    
+
     elif keyarg:
-        
+
         def cache_wrapper2(self, *args, **kwargs):
             cache = '_%s_cache_' % callableobj.__name__
-            key = args[keyarg-1]
+            key = args[keyarg - 1]
             #print 'cache2?', cache, self, key
             try:
                 _cache = self.__dict__[cache]
@@ -55,6 +56,7 @@ def cached(callableobj, keyarg=None):
                 #print 'miss', self, cache, key
                 _cache[key] = callableobj(self, *args, **kwargs)
             return _cache[key]
+
         return cache_wrapper2
 
     def cache_wrapper3(self, *args):
@@ -72,7 +74,9 @@ def cached(callableobj, keyarg=None):
             #print 'miss'
             _cache[args] = callableobj(self, *args)
         return _cache[args]
+
     return cache_wrapper3
+
 
 def clear_cache(obj, funcname):
     """function to clear a cache handled by the cached decorator"""
@@ -80,6 +84,7 @@ def clear_cache(obj, funcname):
         del obj.__dict__['_%s_cache_' % funcname]
     except KeyError:
         pass
+
 
 def copy_cache(obj, funcname, cacheobj):
     """copy cache for <funcname> from cacheobj to obj"""
@@ -94,13 +99,14 @@ class wproperty(object):
     """simple descriptor expecting to take a modifier function as first argument
     and looking for a _<function name> to retrieve the attribute
     """
+
     def __init__(self, setfunc):
         self.setfunc = setfunc
         self.attrname = '_%s' % setfunc.__name__
-        
+
     def __set__(self, obj, value):
         self.setfunc(obj, value)
-        
+
     def __get__(self, obj, cls):
         assert obj is not None
         return getattr(obj, self.attrname)
@@ -109,10 +115,14 @@ class wproperty(object):
 class classproperty(object):
     def __init__(self, get):
         self.get = get
+
     def __get__(self, inst, cls):
         return self.get(cls)
 
+
 from time import clock
+
+
 def timed(f):
     def wrap(*args, **kwargs):
         t = clock()
@@ -120,5 +130,6 @@ def timed(f):
         res = f(*args, **kwargs)
         print '%s time: %.9f' % (f.__name__, clock() - t)
         return res
+
     return wrap
 

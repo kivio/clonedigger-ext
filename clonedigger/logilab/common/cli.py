@@ -44,16 +44,17 @@ Exemple usage:
 :contact:   http://www.logilab.fr/ -- mailto:python-projects@logilab.org
 """
 
-
 import __builtin__
+
 if not hasattr(__builtin__, '_'):
     __builtin__._ = str
-    
+
 
 def init_readline(complete_method, histfile=None):
     """init the readline library if available"""
     try:
         import readline
+
         readline.parse_and_bind("tab: complete")
         readline.set_completer(complete_method)
         string = readline.get_completer_delims().replace(':', '')
@@ -64,23 +65,24 @@ def init_readline(complete_method, histfile=None):
             except IOError:
                 pass
             import atexit
+
             atexit.register(readline.write_history_file, histfile)
     except:
         print 'readline si not available :-('
 
 
-class Completer :
+class Completer:
     """readline completer"""
-    
+
     def __init__(self, commands):
         self.list = commands
-        
+
     def complete(self, text, state):
         """hook called by readline when <tab> is pressed"""
         n = len(text)
         matches = []
-        for cmd in self.list :
-            if cmd[:n] == text :
+        for cmd in self.list:
+            if cmd[:n] == text:
                 matches.append(cmd)
         try:
             return matches[state]
@@ -92,13 +94,13 @@ class CLIHelper:
     """ an abstract command line interface client which recognize commands
     and provide an help system
     """
-    
-    CMD_MAP = {'help' : _("Others"),
-               'quit' : _("Others"),
-               }
+
+    CMD_MAP = {'help': _("Others"),
+               'quit': _("Others"),
+    }
     CMD_PREFIX = ''
-    
-    def __init__(self, histfile=None) :
+
+    def __init__(self, histfile=None):
         self._topics = {}
         self.commands = None
         self._completer = Completer(self._register_commands())
@@ -110,7 +112,7 @@ class CLIHelper:
             try:
                 line = raw_input('>>> ')
             except EOFError:
-                print 
+                print
                 break
             s_line = line.strip()
             if not s_line:
@@ -124,12 +126,14 @@ class CLIHelper:
                     break
                 except:
                     import traceback
+
                     traceback.print_exc()
             else:
                 try:
                     self.handle_line(s_line)
                 except:
                     import traceback
+
                     traceback.print_exc()
 
     def handle_line(self, stripped_line):
@@ -141,7 +145,7 @@ class CLIHelper:
 
 
     # private methods #########################################################
-    
+
     def _register_commands(self):
         """ register available commands method and return the list of
         commands name
@@ -165,8 +169,8 @@ class CLIHelper:
 
 
     # predefined commands #####################################################
-    
-    def do_help(self, command=None) :
+
+    def do_help(self, command=None):
         """base input of the help system"""
         if self._command_help.has_key(command):
             self._print_help(*self._command_help[command])
@@ -183,7 +187,7 @@ class CLIHelper:
             commands.sort()
             for command in commands:
                 print '\t', command[len(self.CMD_PREFIX):]
-                
+
         else:
             print _('Available commands about %s:') % command
             print
@@ -195,10 +199,11 @@ class CLIHelper:
                         self._print_help(*command_help_method)
                 except:
                     import traceback
+
                     traceback.print_exc()
-                    print 'ERROR in help method %s'% (
+                    print 'ERROR in help method %s' % (
                         command_help_method.func_name)
-                
+
     help_do_help = ("help", "help [topic|command]",
                     _("print help message for the given topic/command or \
 available topics when no argument"))
@@ -206,6 +211,6 @@ available topics when no argument"))
     def do_quit(self):
         """quit the CLI"""
         raise EOFError()
-    
+
     def help_do_quit(self):
         return ("quit", "quit", _("quit the application"))

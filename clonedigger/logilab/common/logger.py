@@ -18,26 +18,26 @@ everything on stdout, the other using syslog.
 """
 
 from warnings import warn
+
 warn('logger module is deprecated and will disappear in a future release. \
 use logging module instead.',
      DeprecationWarning, stacklevel=1)
 
 __revision__ = "$Id: logger.py,v 1.18 2006-02-03 14:17:42 adim Exp $"
 
-
 import sys
 import traceback
 import time
 
 
-LOG_EMERG   = 0
-LOG_ALERT   = 1
-LOG_CRIT    = 2
-LOG_ERR     = 3
-LOG_WARN    = 4
-LOG_NOTICE  = 5
-LOG_INFO    = 6
-LOG_DEBUG   = 7
+LOG_EMERG = 0
+LOG_ALERT = 1
+LOG_CRIT = 2
+LOG_ERR = 3
+LOG_WARN = 4
+LOG_NOTICE = 5
+LOG_INFO = 6
+LOG_DEBUG = 7
 
 INDICATORS = ['emergency', 'alert', 'critical', 'error',
               'warning', 'notice', 'info', 'debug']
@@ -74,13 +74,13 @@ class AbstractLogger:
     def __init__(self, threshold=LOG_DEBUG, priority_indicator=1):
         self.threshold = threshold
         self.priority_indicator = priority_indicator
-        
+
     def log(self, priority=LOG_DEBUG, message='', substs=None):
         """log a message with priority <priority>
         substs are optional substrings
         """
         #print 'LOG', self, priority, self.threshold, message
-        if priority <= self.threshold :
+        if priority <= self.threshold:
             if substs is not None:
                 message = message % substs
             if self.priority_indicator:
@@ -98,7 +98,7 @@ class AbstractLogger:
         e_type, value, tbck = tb_info
         stacktb = traceback.extract_tb(tbck)
         l = ['Traceback (most recent call last):']
-        for stackentry in stacktb :
+        for stackentry in stacktb:
             if stackentry[3]:
                 plus = '\n    %s' % stackentry[3]
             else:
@@ -109,7 +109,7 @@ class AbstractLogger:
             l.append(str(e_type) + ': ' + value.__str__())
         except UnicodeError:
             l.append(str(e_type) + ' (message can\'t be displayed)')
-            
+
         self.log(priority, '\n'.join(l))
 
 
@@ -118,14 +118,14 @@ class PrintLogger(AbstractLogger):
 
     log everything to a file, using the standard output by default
     """
-    
+
     def __init__(self, threshold, output=sys.stdout, sid=None,
                  encoding='UTF-8'):
         AbstractLogger.__init__(self, threshold)
         self.output = output
         self.sid = sid
         self.encoding = encoding
-        
+
     def _writelog(self, priority, message):
         """overridden from AbstractLogger"""
         if isinstance(message, unicode):
@@ -137,6 +137,7 @@ class PrintLogger(AbstractLogger):
             self.output.write('[%s] %s\n' % (time.asctime(), message))
         self.output.flush()
 
+
 class SysLogger(AbstractLogger):
     """ logger implementation
 
@@ -146,15 +147,17 @@ class SysLogger(AbstractLogger):
 
     def __init__(self, threshold, sid=None, encoding='UTF-8'):
         import syslog
+
         AbstractLogger.__init__(self, threshold)
         if sid is None:
             sid = 'syslog'
         self.encoding = encoding
         syslog.openlog(sid, syslog.LOG_PID)
-        
+
     def _writelog(self, priority, message):
         """overridden from AbstractLogger"""
         import syslog
+
         if isinstance(message, unicode):
             message = message.encode(self.encoding, 'replace')
         syslog.syslog(priority | syslog.LOG_LOCAL7, message)

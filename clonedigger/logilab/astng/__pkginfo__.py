@@ -46,7 +46,6 @@ builder object, which can either generate extended ast (let's call
 them astng ;) by visiting an existant ast tree or by inspecting living
 object. Methods are added by monkey patching ast classes."""
 
-
 web = "http://www.logilab.org/project/name/%s" % distname
 ftp = "ftp://ftp.logilab.org/pub/%s" % modname
 mailinglist = "mailto://python-projects@lists.logilab.org"
@@ -54,6 +53,7 @@ mailinglist = "mailto://python-projects@lists.logilab.org"
 subpackage_of = 'logilab'
 
 from os.path import join
+
 include_dirs = [join('test', 'regrtest_data'),
                 join('test', 'data'), join('test', 'data2')]
 

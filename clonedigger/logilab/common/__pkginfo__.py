@@ -43,7 +43,6 @@ modules,
   * generating text and HTML reports
   * logging"""
 
-
 web = "http://www.logilab.org/project/%s" % distname
 ftp = "ftp://ftp.logilab.org/pub/%s" % modname
 mailinglist = "mailto://python-projects@lists.logilab.org"
@@ -53,6 +52,7 @@ subpackage_master = True
 
 scripts = ('bin/pytest',)
 from os.path import join
+
 include_dirs = [join('test', 'data')]
 pyversions = ['2.3', '2.4', '2.5']
 debian_maintainer = 'Alexandre Fayolle'

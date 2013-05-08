@@ -31,43 +31,47 @@ __docformat__ = "restructuredtext en"
 
 import sys
 from os.path import splitext, basename, dirname, exists, abspath
-from parser import ParserError
 from compiler import parse
 from inspect import isfunction, ismethod, ismethoddescriptor, isclass, \
-     isbuiltin
+    isbuiltin
 from inspect import isdatadescriptor
+import token
+from compiler import transformer, consts
+from types import TupleType
 
+from parser import ParserError
 from clonedigger.logilab.common.fileutils import norm_read
 from clonedigger.logilab.common.modutils import modpath_from_file
-
 from clonedigger.logilab.astng import nodes, YES, Instance
 from clonedigger.logilab.astng.utils import ASTWalker
 from clonedigger.logilab.astng._exceptions import ASTNGBuildingException, InferenceError
 from clonedigger.logilab.astng.raw_building import *
 from clonedigger.logilab.astng.astutils import cvrtr
 
-import token
-from compiler import transformer, consts
-from types import TupleType
 
 def fromto_lineno(asttuple):
     """return the minimum and maximum line number of the given ast tuple"""
     return from_lineno(asttuple), to_lineno(asttuple)
+
+
 def from_lineno(asttuple):
     """return the minimum line number of the given ast tuple"""
     if type(asttuple[1]) is TupleType:
         return from_lineno(asttuple[1])
     return asttuple[2]
+
+
 def to_lineno(asttuple):
     """return the maximum line number of the given ast tuple"""
     if type(asttuple[-1]) is TupleType:
         return to_lineno(asttuple[-1])
     return asttuple[2]
 
+
 def fix_lineno(node, fromast, toast=None):
     if 'fromlineno' in node.__dict__:
-        return node    
-    #print 'fixing', id(node), id(node.__dict__), node.__dict__.keys(), repr(node)
+        return node
+        #print 'fixing', id(node), id(node.__dict__), node.__dict__.keys(), repr(node)
     if isinstance(node, nodes.Stmt):
         node.fromlineno = from_lineno(fromast)#node.nodes[0].fromlineno
         node.tolineno = node.nodes[-1].tolineno
@@ -76,8 +80,9 @@ def fix_lineno(node, fromast, toast=None):
         node.fromlineno, node.tolineno = fromto_lineno(fromast)
     else:
         node.fromlineno, node.tolineno = from_lineno(fromast), to_lineno(toast)
-    #print 'fixed', id(node)
+        #print 'fixed', id(node)
     return node
+
 
 BaseTransformer = transformer.Transformer
 
@@ -91,19 +96,26 @@ COORD_MAP = {
     # 'try' ':' suite (except_clause ':' suite)+ ['else' ':' suite]
     'try': (0, 0),
     # | 'try' ':' suite 'finally' ':' suite
-    
-    }
+
+}
+
 
 def fixlineno_wrap(function, stype):
     def fixlineno_wrapper(self, nodelist):
-        node = function(self, nodelist)            
+        node = function(self, nodelist)
         idx1, idx2 = COORD_MAP.get(stype, (0, -1))
         return fix_lineno(node, nodelist[idx1], nodelist[idx2])
+
     return fixlineno_wrapper
+
+
 nodes.Module.fromlineno = 0
 nodes.Module.tolineno = 0
+
+
 class ASTNGTransformer(BaseTransformer):
     """ovverides transformer for a better source line number handling"""
+
     def com_NEWLINE(self, *args):
         # A ';' at the end of a line can make a NEWLINE token appear
         # here, Render it harmless. (genc discards ('discard',
@@ -113,29 +125,33 @@ class ASTNGTransformer(BaseTransformer):
         # added, without "physical" reference in the source
         n = nodes.Discard(nodes.Const(None))
         n.fromlineno = n.tolineno = lineno
-        return n    
+        return n
+
     def com_node(self, node):
         res = self._dispatch[node[0]](node[1:])
         return fix_lineno(res, node)
+
     def com_assign(self, node, assigning):
         res = BaseTransformer.com_assign(self, node, assigning)
         return fix_lineno(res, node)
+
     def com_apply_trailer(self, primaryNode, nodelist):
         node = BaseTransformer.com_apply_trailer(self, primaryNode, nodelist)
         return fix_lineno(node, nodelist)
-    
-##     def atom(self, nodelist):
-##         node = BaseTransformer.atom(self, nodelist)
-##         return fix_lineno(node, nodelist[0], nodelist[-1])
-    
+
+    ##     def atom(self, nodelist):
+    ##         node = BaseTransformer.atom(self, nodelist)
+    ##         return fix_lineno(node, nodelist[0], nodelist[-1])
+
     def funcdef(self, nodelist):
         node = BaseTransformer.funcdef(self, nodelist)
         # XXX decorators
         return fix_lineno(node, nodelist[-5], nodelist[-3])
+
     def classdef(self, nodelist):
         node = BaseTransformer.classdef(self, nodelist)
         return fix_lineno(node, nodelist[0], nodelist[-2])
-            
+
 # wrap *_stmt methods
 for name in dir(BaseTransformer):
     if name.endswith('_stmt') and not (name in ('com_stmt',
@@ -143,7 +159,7 @@ for name in dir(BaseTransformer):
                                        or name in ASTNGTransformer.__dict__):
         setattr(BaseTransformer, name,
                 fixlineno_wrap(getattr(BaseTransformer, name), name[:-5]))
-            
+
 transformer.Transformer = ASTNGTransformer
 
 # ast NG builder ##############################################################
@@ -151,7 +167,7 @@ transformer.Transformer = ASTNGTransformer
 class ASTNGBuilder:
     """provide astng building methods
     """
-    
+
     def __init__(self, manager=None):
         if manager is None:
             from clonedigger.logilab.astng import MANAGER as manager
@@ -160,11 +176,11 @@ class ASTNGBuilder:
         self._file = None
         self._done = None
         self._stack, self._par_stack = None, None
-        self._metaclass = None        
+        self._metaclass = None
         self._walker = ASTWalker(self)
         self._dyn_modname_map = {'gtk': 'gtk._gtk'}
         self._delayed = []
-        
+
     def module_build(self, module, modname=None):
         """build an astng from a living module instance
         """
@@ -196,7 +212,7 @@ class ASTNGBuilder:
         self._done = {}
         self.object_build(node, module)
         return node
-    
+
     def file_build(self, path, modname=None):
         """build astng from a source code file (i.e. from an ast)
 
@@ -214,7 +230,7 @@ class ASTNGBuilder:
                 modname = '.'.join(modpath_from_file(path))
             except ImportError:
                 modname = splitext(basename(path))[0]
-        # build astng representation
+            # build astng representation
         try:
             sys.path.insert(0, dirname(path))
             node = self.string_build(data, modname, path)
@@ -222,13 +238,13 @@ class ASTNGBuilder:
         finally:
             self._file = None
             sys.path.pop(0)
-        
+
         return node
-    
+
     def string_build(self, data, modname='', path=None):
         """build astng from a source code stream (i.e. from an ast)"""
         return self.ast_build(parse(data + '\n'), modname, path)
-       
+
     def ast_build(self, node, modname=None, path=None):
         """recurse on the ast (soon ng) to add some arguments et method
         """
@@ -241,7 +257,7 @@ class ASTNGBuilder:
             node.package = True
         else:
             node.package = path and path.find('__init__.py') > -1 or False
-        node.name = modname 
+        node.name = modname
         node.pure_python = True
         if self._manager is not None:
             self._manager._cache[node.file] = node
@@ -277,7 +293,7 @@ class ASTNGBuilder:
             const = nodes.Const(dirname(node.path))
             const.parent = node
             node.locals['__path__'] = [const]
-            
+
 
     def leave_module(self, _):
         """leave a stmt.Module node -> pop the last item on the stack and check
@@ -287,8 +303,8 @@ class ASTNGBuilder:
         assert not self._stack, 'Stack is not empty : %s' % self._stack
         self._par_stack.pop()
         assert not self._par_stack, \
-               'Parent stack is not empty : %s' % self._par_stack
-        
+            'Parent stack is not empty : %s' % self._par_stack
+
     def visit_class(self, node):
         """visit a stmt.Class node -> init node and push the corresponding
         object or None on the top of the stack
@@ -305,7 +321,7 @@ class ASTNGBuilder:
             node.locals[name] = [const]
         attach___dict__(node)
         self._metaclass.append(self._metaclass[-1])
-        
+
     def leave_class(self, node):
         """leave a stmt.Class node -> pop the last item on the stack
         """
@@ -316,7 +332,7 @@ class ASTNGBuilder:
             # no base classes, detect new / style old style according to
             # current scope
             node._newstyle = metaclass == 'type'
-        
+
     def visit_function(self, node):
         """visit a stmt.Function node -> init node and push the corresponding
         object or None on the top of the stack
@@ -330,14 +346,14 @@ class ASTNGBuilder:
                 node.type = 'classmethod'
         self._push(node)
         register_arguments(node, node.argnames)
-        
+
     def leave_function(self, node):
         """leave a stmt.Function node -> pop the last item on the stack
         """
         self.leave_default(node)
         self._stack.pop()
         self._global_names.pop()
-        
+
     def visit_lambda(self, node):
         """visit a stmt.Lambda node -> init node locals
         """
@@ -345,13 +361,13 @@ class ASTNGBuilder:
         node.argnames = list(node.argnames)
         node.locals = {}
         register_arguments(node, node.argnames)
-        
+
     def visit_genexpr(self, node):
         """visit a stmt.GenExpr node -> init node locals
         """
         self.visit_default(node)
         node.locals = {}
-        
+
     def visit_global(self, node):
         """visit a stmt.Global node -> add declared names to locals
         """
@@ -360,12 +376,12 @@ class ASTNGBuilder:
             return
         for name in node.names:
             self._global_names[-1].setdefault(name, []).append(node)
-#             node.parent.set_local(name, node)
-#         module = node.root()
-#         if module is not node.frame():
-#             for name in node.names:
-#                 module.set_local(name, node)
-            
+        #             node.parent.set_local(name, node)
+        #         module = node.root()
+        #         if module is not node.frame():
+        #             for name in node.names:
+        #                 module.set_local(name, node)
+
     def visit_import(self, node):
         """visit a stmt.Import node -> add imported names to locals
         """
@@ -373,7 +389,7 @@ class ASTNGBuilder:
         for (name, asname) in node.names:
             name = asname or name
             node.parent.set_local(name.split('.')[0], node)
-            
+
     def visit_from(self, node):
         """visit a stmt.From node -> add imported names to locals
         """
@@ -403,10 +419,10 @@ class ASTNGBuilder:
         func = node.parent
         for decorator_expr in node.nodes:
             if isinstance(decorator_expr, nodes.Name) and \
-                   decorator_expr.name in ('classmethod', 'staticmethod'):
+                            decorator_expr.name in ('classmethod', 'staticmethod'):
                 func.type = decorator_expr.name
         self.leave_default(node)
-        
+
     def visit_assign(self, node):
         """visit a stmt.Assign node -> check for classmethod and staticmethod
         + __metaclass__
@@ -415,8 +431,8 @@ class ASTNGBuilder:
         klass = node.parent.frame()
         #print node
         if isinstance(klass, nodes.Class) and \
-            isinstance(node.expr, nodes.CallFunc) and \
-            isinstance(node.expr.node, nodes.Name):
+                isinstance(node.expr, nodes.CallFunc) and \
+                isinstance(node.expr.node, nodes.Name):
             func_name = node.expr.node.name
             if func_name in ('classmethod', 'staticmethod'):
                 for ass_node in node.nodes:
@@ -425,8 +441,8 @@ class ASTNGBuilder:
                             meth = klass[ass_node.name]
                             if isinstance(meth, nodes.Function):
                                 meth.type = func_name
-                            #else:
-                            #    print >> sys.stderr, 'FIXME 1', meth
+                                #else:
+                                #    print >> sys.stderr, 'FIXME 1', meth
                         except KeyError:
                             #print >> sys.stderr, 'FIXME 2', ass_node.name
                             continue
@@ -445,7 +461,7 @@ class ASTNGBuilder:
         """
         self.visit_default(node)
         if not isinstance(node.node, nodes.Name):
-            return  # XXX
+            return # XXX
         self._add_local(node, node.node.name)
 
     def _add_local(self, node, name):
@@ -453,14 +469,14 @@ class ASTNGBuilder:
             node.root().set_local(name, node)
         else:
             node.parent.set_local(name, node)
-        
+
     def visit_assattr(self, node):
         """visit a stmt.AssAttr node -> delay it to handle members
         definition later
         """
         self.visit_default(node)
         self._delayed.append(node)
-    
+
     def delayed_visit_assattr(self, node):
         """visit a stmt.AssAttr node -> add name to locals, handle members
         definition
@@ -481,17 +497,17 @@ class ASTNGBuilder:
                 values = iattrs.setdefault(node.attrname, [])
                 if node in values:
                     continue
-                # get assign in __init__ first XXX useful ?
+                    # get assign in __init__ first XXX useful ?
                 if frame.name == '__init__' and values and not \
-                       values[0].frame().name == '__init__':
+                            values[0].frame().name == '__init__':
                     values.insert(0, node)
                 else:
                     values.append(node)
-                #print node.attrname, infered, values
+                    #print node.attrname, infered, values
         except InferenceError:
             #print frame, node
             pass
-        
+
     def visit_default(self, node):
         """default visit method, handle the parent attribute
         """
@@ -499,10 +515,10 @@ class ASTNGBuilder:
         assert node.parent is not node
         self._par_stack.append(node)
 
-    def leave_default(self, _):       
+    def leave_default(self, _):
         """default leave method, handle the parent attribute
         """
-        self._par_stack.pop()             
+        self._par_stack.pop()
 
     def _push(self, node):
         """update the stack and init some parts of the Function or Class node
@@ -516,7 +532,7 @@ class ASTNGBuilder:
     #
     # this is actually a really minimal representation, including only Module,
     # Function and Class nodes and some others as guessed
-    
+
     def object_build(self, node, obj):
         """recursive method which create a partial ast from real objects
          (only function, class, and method are handled)
@@ -546,7 +562,7 @@ class ASTNGBuilder:
                 if self._member_module(member) != modname:
                     imported_member(node, member, name)
                     continue
-                object_build_methoddescriptor(node, member)                
+                object_build_methoddescriptor(node, member)
             elif isclass(member):
                 # verify this is not an imported class
                 if self._member_module(member) != modname:
@@ -557,7 +573,7 @@ class ASTNGBuilder:
                     node.add_local_node(class_node, name)
                 else:
                     class_node = object_build_class(node, member)
-                # recursion
+                    # recursion
                 self.object_build(class_node, member)
             elif ismethoddescriptor(member):
                 assert isinstance(member, object)
@@ -574,7 +590,8 @@ class ASTNGBuilder:
     def _member_module(self, member):
         modname = getattr(member, '__module__', None)
         return self._dyn_modname_map.get(modname, modname)
-        
+
+
 def imported_member(node, member, name):
     """consider a class/builtin member where __module__ != current module name
 
@@ -589,7 +606,7 @@ def imported_member(node, member, name):
         attach_dummy_node(node, name, member)
     else:
         attach_import_node(node, member_module, name)
-    
+
 # optimize the tokenize module
 #from logilab.common.bind import optimize_module
 #import tokenize

@@ -30,21 +30,21 @@ ProtocolError = xmlrpclib.ProtocolError
 ##         self.password = password
 ##         self.verbose = None
 ##         self.has_ssl = httplib.__dict__.has_key("HTTPConnection")
- 
+
 ##     def request(self, host, handler, request_body, verbose=None):
 ##         # issue XML-RPC request
 ##         if self.has_ssl:
 ##             if host.startswith("https:"): h = httplib.HTTPSConnection(host)
 ##             else: h = httplib.HTTPConnection(host)
 ##         else: h = httplib.HTTP(host)
- 
+
 ##         h.putrequest("POST", handler)
- 
+
 ##         # required by HTTP/1.1
 ##         if not self.has_ssl: # HTTPConnection already does 1.1
 ##             h.putheader("Host", host)
 ##         h.putheader("Connection", "close")
- 
+
 ##         if request_body: h.send(request_body)
 ##         if self.has_ssl:
 ##             response = h.getresponse()
@@ -59,22 +59,22 @@ ProtocolError = xmlrpclib.ProtocolError
 ##             if errcode != 200:
 ##                 raise xmlrpclib.ProtocolError(host + handler, errcode,
 ##                                               errmsg, headers)
- 
+
 ##             file = h.getfile()
- 
+
 ##         return self.parse_response(file)
-                                                                              
+
 
 
 class AuthMixin:
     """basic http authentication mixin for xmlrpc transports"""
-    
+
     def __init__(self, username, password, encoding):
         self.verbose = 0
         self.username = username
         self.password = password
         self.encoding = encoding
-        
+
     def request(self, host, handler, request_body, verbose=0):
         """issue XML-RPC request"""
         h = self.make_connection(host)
@@ -93,25 +93,27 @@ class AuthMixin:
         # send body
         if request_body:
             h.send(request_body)
-        # get and check reply
+            # get and check reply
         errcode, errmsg, headers = h.getreply()
         if errcode != 200:
             raise ProtocolError(host + handler, errcode, errmsg, headers)
         file = h.getfile()
-##         # FIXME: encoding ??? iirc, this fix a bug in xmlrpclib but...
-##         data = h.getfile().read()
-##         if self.encoding != 'UTF-8':
-##             data = data.replace("version='1.0'",
-##                                 "version='1.0' encoding='%s'" % self.encoding)
-##         result = StringIO()
-##         result.write(data)
-##         result.seek(0)
-##         return self.parse_response(result)
+        ##         # FIXME: encoding ??? iirc, this fix a bug in xmlrpclib but...
+        ##         data = h.getfile().read()
+        ##         if self.encoding != 'UTF-8':
+        ##             data = data.replace("version='1.0'",
+        ##                                 "version='1.0' encoding='%s'" % self.encoding)
+        ##         result = StringIO()
+        ##         result.write(data)
+        ##         result.seek(0)
+        ##         return self.parse_response(result)
         return self.parse_response(file)
-    
+
+
 class BasicAuthTransport(AuthMixin, xmlrpclib.Transport):
     """basic http authentication transport"""
-    
+
+
 class BasicAuthSafeTransport(AuthMixin, xmlrpclib.SafeTransport):
     """basic https authentication transport"""
 

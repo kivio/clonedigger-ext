@@ -26,7 +26,7 @@ from clonedigger.logilab.common.modutils import LazyObject, load_module_from_nam
 
 class deprecated(type):
     """metaclass to print a warning on instantiation of a deprecated class"""
-    
+
     def __call__(cls, *args, **kwargs):
         msg = getattr(cls, "__deprecation_warning__",
                       "%s is deprecated" % cls.__name__)
@@ -56,9 +56,11 @@ def class_renamed(old_name, new_class, message=None):
         class DeprecatedClass(new_class):
             """FIXME: There might be a better way to handle old/new-style class
             """
+
             def __init__(self, *args, **kwargs):
                 warn(message, DeprecationWarning, stacklevel=2)
                 new_class.__init__(self, *args, **kwargs)
+
         return DeprecatedClass
 
 
@@ -87,9 +89,11 @@ def deprecated_function(new_func, message=None):
     if message is None:
         message = "this function is deprecated, use %s instead" % (
             new_func.func_name)
+
     def deprecated(*args, **kwargs):
         warn(message, DeprecationWarning, stacklevel=2)
         return new_func(*args, **kwargs)
+
     return deprecated
 
 
@@ -104,11 +108,13 @@ def moved(modpath, objname):
     wrapper is use in a class ancestors list, use the `class_moved` function
     instead (which has no lazy import feature though).
     """
+
     def callnew(*args, **kwargs):
         message = "object %s has been moved to module %s" % (objname, modpath)
         warn(message, DeprecationWarning, stacklevel=2)
         m = load_module_from_name(modpath)
         return getattr(m, objname)(*args, **kwargs)
+
     return callnew
 
 
@@ -129,16 +135,21 @@ class WarnLazyObject(LazyObject):
             warn(message, DeprecationWarning, stacklevel=2)
         return super(WarnLazyObject, self).__getobj()
 
+
 module_moved = WarnLazyObject
+
 
 def obsolete(reason="This function is obsolete"):
     """this function is an alternative to `deprecated_function`
     when there's no real replacement for the deprecated function
     """
+
     def newdecorator(func):
         def wrapped(*args, **kwargs):
             warn(reason, DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
+
         return wrapped
+
     return newdecorator
 

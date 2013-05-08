@@ -36,6 +36,7 @@ from cStringIO import StringIO
 from clonedigger.logilab.common import STD_BLACKLIST as BASE_BLACKLIST, IGNORED_EXTENSIONS
 from clonedigger.logilab.common.shellutils import find
 
+
 def first_level_directory(path):
     """return the first level directory of a path
     
@@ -58,8 +59,9 @@ def first_level_directory(path):
         head, tail = split(head)
     if tail:
         return tail
-    # path was absolute, head is the fs root
+        # path was absolute, head is the fs root
     return head
+
 
 def abspath_listdir(path):
     """lists path's content using absolute paths
@@ -72,7 +74,7 @@ def abspath_listdir(path):
     path = abspath(path)
     return [join(path, filename) for filename in listdir(path)]
 
-    
+
 def is_binary(filename):
     """return true if filename may be a binary file, according to it's
     extension
@@ -120,7 +122,7 @@ def ensure_fs_mode(filepath, desired_mode=S_IWRITE):
     mode = stat(filepath)[ST_MODE]
     if not mode & desired_mode:
         chmod(filepath, mode | desired_mode)
-        
+
 
 class ProtectedFile(file):
     """a special file-object class that automatically that automatically
@@ -142,6 +144,7 @@ class ProtectedFile(file):
     - on close()/del(), write/append the StringIO content to the file and
       do the chmod only once
     """
+
     def __init__(self, filepath, mode):
         self.original_mode = stat(filepath)[ST_MODE]
         self.mode_changed = False
@@ -157,7 +160,7 @@ class ProtectedFile(file):
             chmod(self.name, self.original_mode)
             # Don't re-chmod in case of several restore
             self.mode_changed = False
-    
+
     def close(self):
         """restore mode before closing"""
         self._restore_mode()
@@ -172,6 +175,7 @@ class UnresolvableError(Exception):
     """exception raised by relative path when it's unable to compute relative
     path between two paths
     """
+
 
 def relative_path(from_file, to_file):
     """try to get a relative path from from `from_file` to `to_file`
@@ -242,8 +246,10 @@ def relative_path(from_file, to_file):
 
 from clonedigger.logilab.common.textutils import _LINE_RGX
 from sys import version_info
+
 _HAS_UNIV_OPEN = version_info[:2] >= (2, 3)
 del version_info
+
 
 def norm_read(path):
     """return the content of the file with normalized line feeds
@@ -272,7 +278,7 @@ def norm_open(path):
         return open(path, 'U')
     return StringIO(_LINE_RGX.sub('\n', open(path).read()))
 
-      
+
 def lines(path, comments=None):
     """return a list of non empty lines in the file located at `path`
 
@@ -355,6 +361,7 @@ def export(from_dir, to_dir,
       flag indicating wether information about exported files should be
       printed to stderr, default to False
     """
+
     def make_mirror(_, directory, fnames):
         """walk handler"""
         for norecurs in blacklist:
@@ -379,6 +386,7 @@ def export(from_dir, to_dir,
                     if exists(dest):
                         remove(dest)
                     shutil.copy2(src, dest)
+
     try:
         mkdir(to_dir)
     except OSError:
@@ -397,6 +405,7 @@ def remove_dead_links(directory, verbose=0):
       flag indicating wether information about deleted links should be
       printed to stderr, default to False
     """
+
     def _remove_dead_link(_, directory, fnames):
         """walk handler"""
         for filename in fnames:
@@ -405,10 +414,12 @@ def remove_dead_links(directory, verbose=0):
                 if verbose:
                     print 'remove dead link', src
                 remove(src)
+
     walk(directory, _remove_dead_link, None)
 
 
 from warnings import warn
+
 
 def files_by_ext(directory, include_exts=None, exclude_exts=None,
                  exclude_dirs=BASE_BLACKLIST):
@@ -435,11 +446,12 @@ def files_by_ext(directory, include_exts=None, exclude_exts=None,
     :return: the list of files matching input criteria
     """
     assert not (include_exts and exclude_exts)
-    warn("files_by_ext is deprecated, use shellutils.find instead" ,
+    warn("files_by_ext is deprecated, use shellutils.find instead",
          DeprecationWarning, stacklevel=2)
     if include_exts:
         return find(directory, include_exts, blacklist=exclude_dirs)
     return find(directory, exclude_exts, exclude=True, blacklist=exclude_dirs)
+
 
 def include_files_by_ext(directory, include_exts, exclude_dirs=BASE_BLACKLIST):
     """return a list of files in a directory matching some extensions
@@ -456,9 +468,10 @@ def include_files_by_ext(directory, include_exts, exclude_dirs=BASE_BLACKLIST):
     :rtype: list
     :return: the list of files matching input criterias
     """
-    warn("include_files_by_ext is deprecated, use shellutils.find instead" ,
+    warn("include_files_by_ext is deprecated, use shellutils.find instead",
          DeprecationWarning, stacklevel=2)
     return find(directory, include_exts, blacklist=exclude_dirs)
+
 
 def exclude_files_by_ext(directory, exclude_exts, exclude_dirs=BASE_BLACKLIST):
     """return a list of files in a directory not matching some extensions
@@ -475,6 +488,6 @@ def exclude_files_by_ext(directory, exclude_exts, exclude_dirs=BASE_BLACKLIST):
     :rtype: list
     :return: the list of files matching input criterias
     """
-    warn("exclude_files_by_ext is deprecated, use shellutils.find instead" ,
+    warn("exclude_files_by_ext is deprecated, use shellutils.find instead",
          DeprecationWarning, stacklevel=2)
     return find(directory, exclude_exts, exclude=True, blacklist=exclude_dirs)

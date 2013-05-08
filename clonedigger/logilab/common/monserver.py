@@ -5,6 +5,7 @@ allowing the remote client to explore the process on the fly
 """
 
 from warnings import warn
+
 warn('this module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=1)
 
@@ -31,7 +32,8 @@ import time
 class MonitorInterpreter(code.InteractiveConsole):
     """Subclasses InteractiveConsole so that all inputs
     and outputs are done through a socket"""
-    def __init__(self, rfile, wfile ):
+
+    def __init__(self, rfile, wfile):
         code.InteractiveConsole.__init__(self)
         self.wfile = wfile
         self.rfile = rfile
@@ -40,10 +42,10 @@ class MonitorInterpreter(code.InteractiveConsole):
 
     def write(self, data):
         """replace stderr output by writing to wfile"""
-        self.wfile.write( data )
+        self.wfile.write(data)
         self.wfile.flush()
 
-    def raw_input( self, prompt = None ):
+    def raw_input(self, prompt=None):
         """Provides reading lines through the network"""
         if prompt is not None:
             self.wfile.write(prompt)
@@ -54,18 +56,19 @@ class MonitorInterpreter(code.InteractiveConsole):
         elif line.endswith("\n"):
             line = line[:-1]
         return line
-        
+
 
 class MonitorRequestHandler(SocketServer.BaseRequestHandler):
     """Request handler for remote interpreter"""
-    def __init__(self, request, clientaddress, server ):
+
+    def __init__(self, request, clientaddress, server):
         self.locals = {}
         self.globals = globals().copy()
         self.wfile = request.makefile("w")
         self.rfile = request.makefile("r")
         SocketServer.BaseRequestHandler.__init__(self, request, clientaddress,
-                                                 server )
-        
+                                                 server)
+
     def handle(self):
         """handle on request, through MonitorInterpreter"""
         saved_stdout = sys.stdout
@@ -81,9 +84,11 @@ class MonitorRequestHandler(SocketServer.BaseRequestHandler):
             traceback.print_exc()
         print "Monitor handler exited"
 
+
 class Monitor(threading.Thread):
     """Monitor server. monothreaded we only
     allow one client at a time"""
+
     def __init__(self, host, port):
         threading.Thread.__init__(self)
         self.host = host
@@ -93,11 +98,10 @@ class Monitor(threading.Thread):
 
     def run(self):
         """run the server loop"""
-        server = SocketServer.TCPServer( (self.host, self.port),
-                                         MonitorRequestHandler )
+        server = SocketServer.TCPServer((self.host, self.port),
+                                        MonitorRequestHandler)
         while not self.exit:
             server.handle_request()
-
 
 
 def demo_forever():
@@ -109,9 +113,10 @@ def demo_forever():
         time.sleep(2)
         cnt += 1
 
+
 if __name__ == "__main__":
     listen_port = int(sys.argv[1])
-    mon = Monitor( "", listen_port )
+    mon = Monitor("", listen_port)
     mon.start()
     try:
         demo_forever()

@@ -67,7 +67,7 @@ config.generate_config()
 :contact:   http://www.logilab.fr/ -- mailto:python-projects@logilab.org
 """
 
-from __future__ import generators 
+from __future__ import generators
 
 __docformat__ = "restructuredtext en"
 __all__ = ('OptionsManagerMixIn', 'OptionsProviderMixIn',
@@ -84,11 +84,12 @@ from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 from clonedigger.logilab.common.compat import set
 from clonedigger.logilab.common.textutils import normalize_text, unquote
 from clonedigger.logilab.common.optik_ext import OptionParser, OptionGroup, Values, \
-     OptionValueError, OptionError, HelpFormatter, generate_manpage, check_date, \
-     check_yn, check_csv, check_file, check_color, check_named, check_password,\
-     NO_DEFAULT, OPTPARSE_FORMAT_DEFAULT
+    OptionValueError, OptionError, HelpFormatter, generate_manpage, check_date, \
+    check_yn, check_csv, check_file, check_color, check_named, check_password, \
+    NO_DEFAULT, OPTPARSE_FORMAT_DEFAULT
 
 REQUIRED = []
+
 
 class UnsupportedAction(Exception):
     """raised by set_option when it doesn't know what to do for an action"""
@@ -103,6 +104,7 @@ def choice_validator(opt_dict, name, value):
         raise OptionValueError(msg % (name, value, opt_dict['choices']))
     return value
 
+
 def multiple_choice_validator(opt_dict, name, value):
     """validate and return a converted value for option of type 'choice'
     """
@@ -114,40 +116,47 @@ def multiple_choice_validator(opt_dict, name, value):
             raise OptionValueError(msg % (name, value, choices))
     return values
 
+
 def csv_validator(opt_dict, name, value):
     """validate and return a converted value for option of type 'csv'
     """
     return check_csv(None, name, value)
+
 
 def yn_validator(opt_dict, name, value):
     """validate and return a converted value for option of type 'yn'
     """
     return check_yn(None, name, value)
 
+
 def named_validator(opt_dict, name, value):
     """validate and return a converted value for option of type 'named'
     """
     return check_named(None, name, value)
 
+
 def file_validator(opt_dict, name, value):
     """validate and return a filepath for option of type 'file'"""
     return check_file(None, name, value)
+
 
 def color_validator(opt_dict, name, value):
     """validate and return a valid color for option of type 'color'"""
     return check_color(None, name, value)
 
+
 def password_validator(opt_dict, name, value):
     """validate and return a string for option of type 'password'"""
     return check_password(None, name, value)
+
 
 def date_validator(opt_dict, name, value):
     """validate and return a mx DateTime object for option of type 'date'"""
     return check_password(None, name, value)
 
 
-VALIDATORS = {'string' : unquote,
-              'int' : int,
+VALIDATORS = {'string': unquote,
+              'int': int,
               'float': float,
               'file': file_validator,
               'font': unquote,
@@ -161,7 +170,8 @@ VALIDATORS = {'string' : unquote,
               'date': date_validator,
               'choice': choice_validator,
               'multiple_choice': multiple_choice_validator,
-              }
+}
+
 
 def _call_validator(opttype, optdict, option, value):
     if not VALIDATORS.has_key(opttype):
@@ -181,6 +191,7 @@ def _call_validator(opttype, optdict, option, value):
 
 def input_password(optdict, question='password:'):
     from getpass import getpass
+
     while True:
         value = getpass(question)
         value2 = getpass('confirm: ')
@@ -188,9 +199,11 @@ def input_password(optdict, question='password:'):
             return value
         print 'password mismatch, try again'
 
+
 def input_string(optdict, question):
     value = raw_input(question).strip()
     return value or None
+
 
 def _make_input_function(opttype):
     def input_validator(optdict, question):
@@ -203,16 +216,19 @@ def _make_input_function(opttype):
             except OptionValueError, ex:
                 msg = str(ex).split(':', 1)[-1].strip()
                 print 'bad value: %s' % msg
+
     return input_validator
+
 
 INPUT_FUNCTIONS = {
     'string': input_string,
     'password': input_password,
-    }
+}
 
 for opttype in VALIDATORS.keys():
     INPUT_FUNCTIONS.setdefault(opttype, _make_input_function(opttype))
-    
+
+
 def expand_default(self, option):
     """monkey patch OptionParser.expand_default since we have a particular
     way to handle defaults to avoid overriding values in the configuration
@@ -234,7 +250,7 @@ def expand_default(self, option):
         value = self.NO_DEFAULT_VALUE
     return option.help.replace(self.default_tag, str(value))
 
-    
+
 def convert(value, opt_dict, name=''):
     """return a validated value for an option according to its type
     
@@ -247,17 +263,19 @@ def convert(value, opt_dict, name=''):
         return value
     return _call_validator(_type, opt_dict, name, value)
 
+
 def comment(string):
     """return string as a comment"""
     lines = [line.strip() for line in string.splitlines()]
     return '# ' + ('%s# ' % os.linesep).join(lines)
+
 
 def format_option_value(optdict, value):
     """return the user input's value from a 'compiled' value"""
     if isinstance(value, (list, tuple)):
         value = ','.join(value)
     elif isinstance(value, dict):
-        value = ','.join(['%s:%s' % (k,v) for k,v in value.items()])    
+        value = ','.join(['%s:%s' % (k, v) for k, v in value.items()])
     elif hasattr(value, 'match'): # optdict.get('type') == 'regexp'
         # compiled regexp
         value = value.pattern
@@ -266,6 +284,7 @@ def format_option_value(optdict, value):
     elif isinstance(value, (str, unicode)) and value.isspace():
         value = "'%s'" % value
     return value
+
 
 def ini_format_section(stream, section, options, doc=None):
     """format an options section using the INI format"""
@@ -284,13 +303,15 @@ def ini_format_section(stream, section, options, doc=None):
             print >> stream, '#%s=' % optname
         else:
             print >> stream, '%s=%s' % (optname, str(value).strip())
-        
+
+
 format_section = ini_format_section
+
 
 def rest_format_section(stream, section, options, doc=None):
     """format an options section using the INI format"""
     if section:
-        print >> stream, '%s\n%s' % (section, "'"*len(section))
+        print >> stream, '%s\n%s' % (section, "'" * len(section))
     if doc:
         print >> stream, normalize_text(doc, line_len=79, indent='')
         print >> stream
@@ -307,7 +328,7 @@ class OptionsManagerMixIn(object):
     """MixIn to handle a configuration from both a configuration file and
     command line options
     """
-    
+
     def __init__(self, usage, config_file=None, version=None, quiet=0):
         self.config_file = config_file
         self.reset_parsers(usage, version=version)
@@ -326,7 +347,7 @@ class OptionsManagerMixIn(object):
         # command line parser
         self._optik_parser = OptionParser(usage=usage, version=version)
         self._optik_parser.options_manager = self
-        
+
     def register_options_provider(self, provider, own_group=True):
         """register an options provider"""
         assert provider.priority <= 0, "provider's priority can't be >= 0"
@@ -346,12 +367,12 @@ class OptionsManagerMixIn(object):
             for opt_name, opt_dict in non_group_spec_options:
                 args, opt_dict = self.optik_option(provider, opt_name, opt_dict)
                 self._optik_parser.add_option(*args, **opt_dict)
-                self._all_options[opt_name] = provider                
+                self._all_options[opt_name] = provider
         for gname, gdoc in groups:
             goptions = [option for option in provider.options
                         if option[1].get('group') == gname]
             self.add_option_group(gname, gdoc, goptions, provider)
-        
+
     def add_option_group(self, group_name, doc, options, provider):
         """add an option group including the listed options
         """
@@ -362,12 +383,12 @@ class OptionsManagerMixIn(object):
             group = OptionGroup(self._optik_parser,
                                 title=group_name.capitalize())
             self._optik_parser.add_option_group(group)
-        # add provider's specific options
+            # add provider's specific options
         for opt_name, opt_dict in options:
             args, opt_dict = self.optik_option(provider, opt_name, opt_dict)
             group.add_option(*args, **opt_dict)
             self._all_options[opt_name] = provider
-            
+
     def optik_option(self, provider, opt_name, opt_dict):
         """get our personal option definition and return a suitable form for
         use with optik/optparse
@@ -394,7 +415,7 @@ class OptionsManagerMixIn(object):
             if not key in available_keys:
                 opt_dict.pop(key)
         return args, opt_dict
-            
+
     def cb_set_provider_option(self, option, opt_name, value, parser):
         """optik callback for option setting"""
         if opt_name.startswith('--'):
@@ -403,11 +424,11 @@ class OptionsManagerMixIn(object):
         else:
             # short option, get its long equivalent
             opt_name = self._short_options[opt_name[1:]]
-        # trick since we can't set action='store_true' on options
+            # trick since we can't set action='store_true' on options
         if value is None:
             value = 1
         self.global_set_option(opt_name, value)
-        
+
     def global_set_option(self, opt_name, value):
         """set option on the correct option provider"""
         self._all_options[opt_name].set_option(opt_name, value)
@@ -444,19 +465,19 @@ class OptionsManagerMixIn(object):
         """
         generate_manpage(self._optik_parser, pkginfo,
                          section, stream=stream or sys.stdout)
-        
+
     # initialization methods ##################################################
 
     def load_provider_defaults(self):
         """initialize configuration using default values"""
         for provider in self.options_providers:
             provider.load_defaults()
-            
+
     def load_file_configuration(self, config_file=None):
         """load the configuration from file"""
         self.read_config_file(config_file)
         self.load_config_file()
-        
+
     def read_config_file(self, config_file=None):
         """read the configuration file but do not load it (ie dispatching
         values to each options provider)
@@ -469,7 +490,7 @@ class OptionsManagerMixIn(object):
             msg = 'No config file found, using default configuration'
             print >> sys.stderr, msg
             return
-    
+
     def input_config(self, onlysection=None, inputlevel=0, stream=None):
         """interactivly get configuration values by asking to the user and generate
         a configuration file
@@ -481,7 +502,7 @@ class OptionsManagerMixIn(object):
                 if onlysection is not None and section != onlysection:
                     continue
                 provider.input_option(option, optdict, inputlevel)
-        # now we can generate the configuration file
+            # now we can generate the configuration file
         if stream is not None:
             self.generate_config(stream)
 
@@ -489,7 +510,7 @@ class OptionsManagerMixIn(object):
         """dispatch values previously read from a configuration file to each
         options provider)
         """
-        parser = self._config_parser        
+        parser = self._config_parser
         for provider in self.options_providers:
             for section, option, optdict in provider.all_options():
                 try:
@@ -505,7 +526,7 @@ class OptionsManagerMixIn(object):
             opt_name = opt_name.replace('_', '-')
             provider = self._all_options[opt_name]
             provider.set_option(opt_name, opt_value)
-            
+
     def load_command_line_configuration(self, args=None):
         """override configuration according to command line parameters
 
@@ -546,33 +567,34 @@ class OptionsManagerMixIn(object):
                             title=title.capitalize(),
                             description=description)
         self._optik_parser.add_option_group(group)
-        
+
     def help(self):
         """return the usage string for available options """
         return self._optik_parser.format_help()
-    
+
 
 class Method(object):
     """used to ease late binding of default method (so you can define options
     on the class using default methods on the configuration instance)
     """
+
     def __init__(self, methname):
         self.method = methname
         self._inst = None
-        
+
     def bind(self, instance):
         """bind the method to its instance"""
         if self._inst is None:
             self._inst = instance
-        
+
     def __call__(self):
         assert self._inst, 'unbound method'
         return getattr(self._inst, self.method)()
 
-        
+
 class OptionsProviderMixIn(object):
     """Mixin to provide options to an OptionsManager"""
-    
+
     # those attributes should be overridden
     priority = -1
     name = 'default'
@@ -588,7 +610,7 @@ class OptionsProviderMixIn(object):
             if isinstance(optdict.get('default'), Method):
                 optdict['default'].bind(self)
         self.load_defaults()
-                
+
     def load_defaults(self):
         """initialize the provider using default values"""
         for opt_name, opt_dict in self.options:
@@ -608,18 +630,18 @@ class OptionsProviderMixIn(object):
         if callable(default):
             default = default()
         return default
-        
+
     def option_name(self, opt_name, opt_dict=None):
         """get the config attribute corresponding to opt_name
         """
         if opt_dict is None:
             opt_dict = self.get_option_def(opt_name)
         return opt_dict.get('dest', opt_name.replace('-', '_'))
-    
+
     def option_value(self, opt_name):
         """get the current value for the given option"""
         return getattr(self.config, self.option_name(opt_name), None)
-        
+
     def set_option(self, opt_name, value, action=None, opt_dict=None):
         """method called to set an option (registered in the options list)
         """
@@ -680,7 +702,7 @@ class OptionsProviderMixIn(object):
         if value is None and default is not None:
             value = default
         self.set_option(option, value, opt_dict=optdict)
-            
+
     def get_option_def(self, opt_name):
         """return the dictionary defining an option given it's name"""
         assert self.options
@@ -694,13 +716,13 @@ class OptionsProviderMixIn(object):
         """return an iterator on available options for this provider
         option are actually described by a 3-uple:
         (section, option name, option dictionary)
-        """        
+        """
         for section, options in self.options_by_section():
             if section is None:
                 section = self.name.upper()
             for option, optiondict, value in options:
                 yield section, option, optiondict
-                
+
     def options_by_section(self):
         """return an iterator on options grouped by section
         
@@ -714,12 +736,13 @@ class OptionsProviderMixIn(object):
             yield None, sections.pop(None)
         for section, options in sections.items():
             yield section.upper(), options
-       
+
 
 class ConfigurationMixIn(OptionsManagerMixIn, OptionsProviderMixIn):
     """basic mixin for simple configurations which don't need the
     manager / providers model
     """
+
     def __init__(self, *args, **kwargs):
         if not args:
             kwargs.setdefault('usage', '')
@@ -745,7 +768,7 @@ class ConfigurationMixIn(OptionsManagerMixIn, OptionsProviderMixIn):
         for group, options in options_by_group.items():
             self.add_option_group(group, None, options, self)
         self.options += tuple(options)
-        
+
     def load_defaults(self):
         OptionsProviderMixIn.load_defaults(self)
 
@@ -757,13 +780,13 @@ class ConfigurationMixIn(OptionsManagerMixIn, OptionsProviderMixIn):
 
     def __setitem__(self, key, value):
         self.set_option(self.option_name(key), value)
-        
+
     def get(self, key, default=None):
         try:
             return getattr(self.config, self.option_name(key))
         except (OptionError, AttributeError):
             return default
-        
+
 
 class Configuration(ConfigurationMixIn):
     """class for simple configurations which don't need the
@@ -787,12 +810,13 @@ class OptionsManager2ConfigurationAdapter(object):
     """Adapt an option manager to behave like a
     `logilab.common.configuration.Configuration` instance
     """
+
     def __init__(self, provider):
         self.config = provider
-        
+
     def __getattr__(self, key):
         return getattr(self.config, key)
-        
+
     def __getitem__(self, key):
         provider = self.config._all_options[key]
         try:
@@ -833,11 +857,11 @@ def read_old_config(newconfig, changes, configfile):
         if action[0] == 'typechanged':
             option, oldtype, newvalue = action[1:]
             changesindex.setdefault(option, []).append((action[0], oldtype, newvalue))
-            continue        
+            continue
         if action[1] in ('added', 'removed'):
             continue # nothing to do here
-        raise Exception('unknown change %s' % action[0])    
-    # build a config object able to read the old config
+        raise Exception('unknown change %s' % action[0])
+        # build a config object able to read the old config
     options = []
     for optname, optdef in newconfig.options:
         for action in changesindex.pop(optname, ()):
@@ -878,7 +902,7 @@ def merge_options(options):
     """preprocess options to remove duplicate"""
     alloptions = {}
     options = list(options)
-    for i in range(len(options)-1, -1, -1):
+    for i in range(len(options) - 1, -1, -1):
         optname, optdict = options[i]
         if optname in alloptions:
             options.pop(i)

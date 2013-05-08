@@ -48,6 +48,7 @@ package directory of your application.
 
 
 from warnings import warn
+
 warn('this module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=1)
 
@@ -61,6 +62,7 @@ from distutils.dep_util import newer
 from distutils.util import convert_path
 import os
 
+
 class twisted_sdist(sdist):
     def add_defaults(self):
         sdist.add_defaults(self)
@@ -68,44 +70,45 @@ class twisted_sdist(sdist):
             plugins = self.get_finalized_command('build_twisted_plugins')
             self.filelist.extend(plugins.get_source_files())
 
+
 class twisted_install(install):
-    def initialize_options (self):
+    def initialize_options(self):
         install.initialize_options(self)
         self.twisted_plugins = None
-        
+
     def has_twisted_plugins(self):
         return self.distribution.has_twisted_plugins()
-    
+
     sub_commands = []
     sub_commands.extend(install.sub_commands)
     sub_commands.append(('install_twisted_plugins', has_twisted_plugins))
-                   
+
 
 class twisted_build(build):
-    def initialize_options (self):
+    def initialize_options(self):
         build.initialize_options(self)
         self.twisted_plugins = None
-        
+
     def has_twisted_plugins(self):
         return self.distribution.has_twisted_plugins()
-    
+
     sub_commands = []
     sub_commands.extend(build.sub_commands)
     sub_commands.append(('build_twisted_plugins', has_twisted_plugins))
 
-class build_twisted_plugins (Command):
 
+class build_twisted_plugins(Command):
     description = "\"build\" twisted plugins (copy)"
 
     user_options = [
         ('build-dir=', 'd', "directory to \"build\" (copy) to"),
         ('force', 'f', "forcibly build everything (ignore file timestamps"),
-        ]
+    ]
 
     boolean_options = ['force']
 
 
-    def initialize_options (self):
+    def initialize_options(self):
         self.build_dir = None
         self.twisted_plugins = None
         self.force = None
@@ -114,20 +117,20 @@ class build_twisted_plugins (Command):
     def get_source_files(self):
         return self.twisted_plugins
 
-    def finalize_options (self):
+    def finalize_options(self):
         self.set_undefined_options('build',
                                    ('build_lib', 'build_dir'),
                                    ('force', 'force'))
         self.twisted_plugins = self.distribution.twisted_plugins
 
 
-    def run (self):
+    def run(self):
         if not self.twisted_plugins:
             return
         self.copy_twisted_plugins()
 
 
-    def copy_twisted_plugins (self):
+    def copy_twisted_plugins(self):
         """Copy each plugin listed in 'self.twisted_plugins'.
         """
         self.mkpath(self.build_dir)
@@ -154,12 +157,11 @@ class build_twisted_plugins (Command):
 
 
 class install_twisted_plugins(Command):
-
     description = "install twisted plugins"
 
     user_options = [
         ('install-dir=', 'd', "directory to install scripts to"),
-        ('build-dir=','b', "build directory (where to install from)"),
+        ('build-dir=', 'b', "build directory (where to install from)"),
         ('force', 'f', "force installation (overwrite existing files)"),
         ('skip-build', None, "skip the build steps"),
     ]
@@ -167,43 +169,42 @@ class install_twisted_plugins(Command):
     boolean_options = ['force', 'skip-build']
 
 
-    def initialize_options (self):
+    def initialize_options(self):
         self.install_dir = None
         self.force = 0
         self.build_dir = None
         self.skip_build = None
 
-    def finalize_options (self):
+    def finalize_options(self):
         self.set_undefined_options('build', ('build_lib', 'build_dir'))
         self.set_undefined_options('install',
                                    ('install_lib', 'install_dir'),
                                    ('force', 'force'),
                                    ('skip_build', 'skip_build'),
-                                  )
+        )
 
-    def run (self):
+    def run(self):
         if not self.skip_build:
             self.run_command('build_twisted_plugins')
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
 
-    def get_inputs (self):
+    def get_inputs(self):
         return self.distribution.twisted_plugins or []
 
     def get_outputs(self):
         return self.outfiles or []
-        
-    
+
 
 class TwistedDistribution(Distribution):
-    def __init__(self,attrs=None):
+    def __init__(self, attrs=None):
         self.twisted_plugins = None
         Distribution.__init__(self, attrs)
-        self.cmdclass = {'install':twisted_install,
-                         'install_twisted_plugins':install_twisted_plugins,
-                         'build':twisted_build,
-                         'build_twisted_plugins':build_twisted_plugins,
-                         'sdist':twisted_sdist,
-                         }
+        self.cmdclass = {'install': twisted_install,
+                         'install_twisted_plugins': install_twisted_plugins,
+                         'build': twisted_build,
+                         'build_twisted_plugins': build_twisted_plugins,
+                         'sdist': twisted_sdist,
+        }
 
     def has_twisted_plugins(self):
         return self.twisted_plugins and len(self.twisted_plugins) > 0
@@ -211,5 +212,6 @@ class TwistedDistribution(Distribution):
 
 def setup(**attrs):
     from distutils import core
+
     attrs['distclass'] = TwistedDistribution
     core.setup(**attrs)

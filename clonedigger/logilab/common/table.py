@@ -7,6 +7,7 @@ from warnings import warn
 
 from clonedigger.logilab.common.compat import enumerate, sum, set
 
+
 class Table(object):
     """Table defines a data table with column and row names.
     inv:
@@ -23,13 +24,13 @@ class Table(object):
             self.create_columns(col_names)
         if row_names:
             self.create_rows(row_names)
-        
+
     def _next_row_name(self):
-        return 'row%s' % (len(self.row_names)+1)
+        return 'row%s' % (len(self.row_names) + 1)
 
     def __iter__(self):
         return iter(self.data)
-    
+
     def __eq__(self, other):
         if other is None:
             return False
@@ -41,15 +42,15 @@ class Table(object):
 
     def __len__(self):
         return len(self.row_names)
-    
+
     ## Rows / Columns creation #################################################
     def create_rows(self, row_names):
         """Appends row_names to the list of existing rows
         """
         self.row_names.extend(row_names)
         for row_name in row_names:
-            self.data.append([self.default_value]*len(self.col_names))
-        
+            self.data.append([self.default_value] * len(self.col_names))
+
     def create_columns(self, col_names):
         """Appends col_names to the list of existing columns
         """
@@ -61,9 +62,9 @@ class Table(object):
         """
         row_name = row_name or self._next_row_name()
         self.row_names.append(row_name)
-        self.data.append([self.default_value]*len(self.col_names))
+        self.data.append([self.default_value] * len(self.col_names))
 
-    
+
     def create_column(self, col_name):
         """Creates a colname to the col_names list
         """
@@ -72,7 +73,7 @@ class Table(object):
             row.append(self.default_value)
 
     ## Sort by column ##########################################################
-    def sort_by_column_id(self, col_id, method = 'asc'):
+    def sort_by_column_id(self, col_id, method='asc'):
         """Sorts the table (in-place) according to data stored in col_id
         """
         try:
@@ -80,9 +81,9 @@ class Table(object):
             self.sort_by_column_index(col_index, method)
         except ValueError:
             raise KeyError("Col (%s) not found in table" % (col_id))
-        
 
-    def sort_by_column_index(self, col_index, method = 'asc'):
+
+    def sort_by_column_index(self, col_index, method='asc'):
         """Sorts the table 'in-place' according to data stored in col_index
 
         method should be in ('asc', 'desc')
@@ -94,7 +95,7 @@ class Table(object):
         # If we want reverse sort, then reverse list
         if method.lower() == 'desc':
             sort_list.reverse()
-        
+
         # Rebuild data / row names
         self.data = []
         self.row_names = []
@@ -131,14 +132,14 @@ class Table(object):
         for row in self.data[:]:
             if row[col_index] == value:
                 self.data.remove(row)
-        
-    
+
+
     ## The 'setter' part #######################################################
     def set_cell(self, row_index, col_index, data):
         """sets value of cell 'row_indew', 'col_index' to data
         """
         self.data[row_index][col_index] = data
-        
+
 
     def set_cell_by_ids(self, row_id, col_id, data):
         """sets value of cell mapped by row_id and col_id to data
@@ -154,8 +155,8 @@ class Table(object):
                 self.data[row_index][col_index] = data
             except ValueError:
                 raise KeyError("Column (%s) not found in table" % (col_id))
-    
-    
+
+
     def set_row(self, row_index, row_data):
         """sets the 'row_index' row
         pre:
@@ -164,7 +165,7 @@ class Table(object):
         """
         self.data[row_index] = row_data
 
-        
+
     def set_row_by_id(self, row_id, row_data):
         """sets the 'row_id' column
         pre:
@@ -177,7 +178,7 @@ class Table(object):
             self.set_row(row_index, row_data)
         except ValueError:
             raise KeyError('Row (%s) not found in table' % (row_id))
-        
+
 
     def append_row(self, row_data, row_name=None):
         """Appends a row to the table
@@ -201,7 +202,7 @@ class Table(object):
         row_name = row_name or self._next_row_name()
         self.row_names.insert(index, row_name)
         self.data.insert(index, row_data)
-    
+
 
     def delete_row(self, index):
         """Deletes the 'index' row in the table, and returns it.
@@ -209,7 +210,7 @@ class Table(object):
         """
         self.row_names.pop(index)
         return self.data.pop(index)
-        
+
 
     def delete_row_by_id(self, row_id):
         """Deletes the 'row_id' row in the table.
@@ -220,7 +221,7 @@ class Table(object):
             self.delete_row(row_index)
         except ValueError:
             raise KeyError('Row (%s) not found in table' % (row_id))
-    
+
 
     def set_column(self, col_index, col_data):
         """sets the 'col_index' column
@@ -228,7 +229,7 @@ class Table(object):
             type(col_data) == types.ListType
             len(col_data) == len(self.row_names)
         """
-        
+
         for row_index, cell_data in enumerate(col_data):
             self.data[row_index][col_index] = cell_data
 
@@ -245,7 +246,7 @@ class Table(object):
             self.set_column(col_index, col_data)
         except ValueError:
             raise KeyError('Column (%s) not found in table' % (col_id))
-        
+
 
     def append_column(self, col_data, col_name):
         """Appends the 'col_index' column
@@ -256,7 +257,7 @@ class Table(object):
         self.col_names.append(col_name)
         for row_index, cell_data in enumerate(col_data):
             self.data[row_index].append(cell_data)
-        
+
 
     def insert_column(self, index, col_data, col_name):
         """Appends col_data before 'index' in the table. To make 'insert'
@@ -269,7 +270,7 @@ class Table(object):
         self.col_names.insert(index, col_name)
         for row_index, cell_data in enumerate(col_data):
             self.data[row_index].insert(index, cell_data)
-        
+
 
     def delete_column(self, index):
         """Deletes the 'index' column in the table, and returns it.
@@ -289,15 +290,16 @@ class Table(object):
         except ValueError:
             raise KeyError('Column (%s) not found in table' % (col_id))
 
-    
+
     ## The 'getter' part #######################################################
 
     def get_shape(self):
         """Returns a tuple which represents the table's shape
-        """    
+        """
         return len(self.row_names), len(self.col_names)
+
     shape = property(get_shape)
-    
+
     def __getitem__(self, indices):
         """provided for convenience"""
         rows, multirows = None, False
@@ -308,38 +310,38 @@ class Table(object):
                 cols = indices[1]
         else:
             rows = indices
-        # define row slice
-        if isinstance(rows,str):
+            # define row slice
+        if isinstance(rows, str):
             try:
                 rows = self.row_names.index(rows)
             except ValueError:
                 raise KeyError("Row (%s) not found in table" % (rows))
-        if isinstance(rows,int):
-            rows = slice(rows,rows+1)
+        if isinstance(rows, int):
+            rows = slice(rows, rows + 1)
             multirows = False
         else:
             rows = slice(None)
             multirows = True
-        # define col slice
-        if isinstance(cols,str):
+            # define col slice
+        if isinstance(cols, str):
             try:
                 cols = self.col_names.index(cols)
             except ValueError:
                 raise KeyError("Column (%s) not found in table" % (cols))
-        if isinstance(cols,int):
-            cols = slice(cols,cols+1)
+        if isinstance(cols, int):
+            cols = slice(cols, cols + 1)
             multicols = False
         else:
             cols = slice(None)
             multicols = True
-        # get sub-table
+            # get sub-table
         tab = Table()
         tab.default_value = self.default_value
         tab.create_rows(self.row_names[rows])
         tab.create_columns(self.col_names[cols])
-        for idx,row in enumerate(self.data[rows]):
+        for idx, row in enumerate(self.data[rows]):
             tab.set_row(idx, row[cols])
-        if multirows :
+        if multirows:
             if multicols:
                 return tab
             else:
@@ -368,7 +370,7 @@ class Table(object):
         warn('table.get_cell(i,j) is deprecated, use table[i,j] instead',
              DeprecationWarning, stacklevel=2)
         return self.data[row_index][col_index]
-        
+
     def get_cell_by_ids(self, row_id, col_id):
         """Returns the element at [row_id][col_id]
         """
@@ -413,7 +415,7 @@ class Table(object):
             return set(col)
         else:
             return col
-    
+
     def get_column_by_id(self, col_id, distinct=False):
         """Returns the 'col_id' col
         """
@@ -424,7 +426,7 @@ class Table(object):
         except ValueError:
             raise KeyError("Column (%s) not found in table" % (col_id))
         return self.get_column(col_index, distinct)
-    
+
 
     def get_rows(self):
         """Returns all the rows in the table
@@ -437,15 +439,15 @@ class Table(object):
     def get_columns(self):
         """Returns all the columns in the table
         """
-        return [self[:,index] for index in range(len(self.col_names))]
+        return [self[:, index] for index in range(len(self.col_names))]
 
-    
+
     def apply_stylesheet(self, stylesheet):
         """Applies the stylesheet to this table
         """
         for instruction in stylesheet.instructions:
             eval(instruction)
-        
+
 
     def transpose(self):
         """Keeps the self object intact, and returns the transposed (rotated)
@@ -473,9 +475,9 @@ class Table(object):
         lines = []
         # Build the 'first' line <=> the col_names one
         # The first cell <=> an empty one
-        col_names_line = [' '*col_start]
+        col_names_line = [' ' * col_start]
         for col_name in self.col_names:
-            col_names_line.append(col_name.encode('iso-8859-1') + ' '*5)
+            col_names_line.append(col_name.encode('iso-8859-1') + ' ' * 5)
         lines.append('|' + '|'.join(col_names_line) + '|')
         max_line_length = len(lines[0])
 
@@ -484,22 +486,22 @@ class Table(object):
             line = []
             # First, build the row_name's cell
             row_name = self.row_names[row_index].encode('iso-8859-1')
-            line.append(row_name + ' '*(col_start-len(row_name)))
+            line.append(row_name + ' ' * (col_start - len(row_name)))
 
             # Then, build all the table's cell for this line.
             for col_index, cell in enumerate(row):
                 col_name_length = len(self.col_names[col_index]) + 5
                 data = str(cell)
-                line.append(data + ' '*(col_name_length - len(data)))
+                line.append(data + ' ' * (col_name_length - len(data)))
             lines.append('|' + '|'.join(line) + '|')
             if len(lines[-1]) > max_line_length:
                 max_line_length = len(lines[-1])
 
         # Wrap the table with '-' to make a frame
-        lines.insert(0, '-'*max_line_length)
-        lines.append('-'*max_line_length)
+        lines.insert(0, '-' * max_line_length)
+        lines.append('-' * max_line_length)
         return '\n'.join(lines)
-    
+
 
     def __repr__(self):
         return repr(self.data)
@@ -511,9 +513,8 @@ class Table(object):
             data.append([str(cell) for cell in row])
         lines = ['\t'.join(row) for row in data]
         return '\n'.join(lines)
-    
 
-    
+
 class TableStyle:
     """Defines a table's style
     """
@@ -521,20 +522,21 @@ class TableStyle:
     def __init__(self, table):
 
         self._table = table
-        self.size = dict([(col_name,'1*') for col_name in table.col_names])
+        self.size = dict([(col_name, '1*') for col_name in table.col_names])
         # __row_column__ is a special key to define the first column which
         # actually has no name (<=> left most column <=> row names column)
         self.size['__row_column__'] = '1*'
-        self.alignment = dict([(col_name,'right')
+        self.alignment = dict([(col_name, 'right')
                                for col_name in table.col_names])
         self.alignment['__row_column__'] = 'right'
 
         # We shouldn't have to create an entry for
         # the 1st col (the row_column one)
-        self.units = dict([(col_name,'') for col_name in table.col_names])
-        self.units['__row_column__'] = '' 
-       
-    # XXX FIXME : params order should be reversed for all set() methods
+        self.units = dict([(col_name, '') for col_name in table.col_names])
+        self.units['__row_column__'] = ''
+
+        # XXX FIXME : params order should be reversed for all set() methods
+
     def set_size(self, value, col_id):
         """sets the size of the specified col_id to value
         """
@@ -548,7 +550,7 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         self.size[col_id] = value
 
@@ -567,7 +569,7 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         self.alignment[col_id] = value
 
@@ -577,7 +579,7 @@ class TableStyle:
         """
         self.units[col_id] = value
 
-    
+
     def set_unit_by_index(self, value, col_index):
         """Allows to set the unit according to the column index rather than
         using the column's id.
@@ -588,16 +590,16 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         self.units[col_id] = value
-    
+
 
     def get_size(self, col_id):
         """Returns the size of the specified col_id
         """
         return self.size[col_id]
-    
+
 
     def get_size_by_index(self, col_index):
         """Allows to get the size  according to the column index rather than
@@ -607,7 +609,7 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         return self.size[col_id]
 
@@ -626,7 +628,7 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         return self.alignment[col_id]
 
@@ -645,13 +647,15 @@ class TableStyle:
         if col_index == 0:
             col_id = '__row_column__'
         else:
-            col_id = self._table.col_names[col_index-1]
+            col_id = self._table.col_names[col_index - 1]
 
         return self.units[col_id]
 
 
-import re    
+import re
+
 CELL_PROG = re.compile("([0-9]+)_([0-9]+)")
+
 
 class TableStyleSheet:
     """A simple Table stylesheet
@@ -664,8 +668,8 @@ class TableStyleSheet:
     You can also use all the math.* operations you want. For example:
         2_5 = sqrt(2_3**2 + 2_4**2)    
     """
-    
-    def __init__(self, rules = None):
+
+    def __init__(self, rules=None):
         rules = rules or []
         self.rules = []
         self.instructions = []
@@ -680,12 +684,12 @@ class TableStyleSheet:
             source_code = ['from math import *']
             source_code.append(CELL_PROG.sub(r'self.data[\1][\2]', rule))
             self.instructions.append(compile('\n'.join(source_code),
-                'table.py', 'exec'))
+                                             'table.py', 'exec'))
             self.rules.append(rule)
         except SyntaxError:
-            print "Bad Stylesheet Rule : %s [skipped]"%rule
+            print "Bad Stylesheet Rule : %s [skipped]" % rule
 
-    
+
     def add_rowsum_rule(self, dest_cell, row_index, start_col, end_col):
         """Creates and adds a rule to sum over the row at row_index from
         start_col to end_col.
@@ -695,11 +699,11 @@ class TableStyleSheet:
             start_col >= 0
             end_col > start_col
         """
-        cell_list = ['%d_%d'%(row_index, index) for index in range(start_col,
-                                                                   end_col + 1)]
+        cell_list = ['%d_%d' % (row_index, index) for index in range(start_col,
+                                                                     end_col + 1)]
         rule = '%d_%d=' % dest_cell + '+'.join(cell_list)
         self.add_rule(rule)
-            
+
 
     def add_rowavg_rule(self, dest_cell, row_index, start_col, end_col):
         """Creates and adds a rule to make the row average (from start_col
@@ -710,12 +714,12 @@ class TableStyleSheet:
             start_col >= 0
             end_col > start_col
         """
-        cell_list = ['%d_%d'%(row_index, index) for index in range(start_col,
-                                                                   end_col + 1)]
+        cell_list = ['%d_%d' % (row_index, index) for index in range(start_col,
+                                                                     end_col + 1)]
         num = (end_col - start_col + 1)
-        rule = '%d_%d=' % dest_cell + '('+'+'.join(cell_list)+')/%f'%num
+        rule = '%d_%d=' % dest_cell + '(' + '+'.join(cell_list) + ')/%f' % num
         self.add_rule(rule)
-        
+
 
     def add_colsum_rule(self, dest_cell, col_index, start_row, end_row):
         """Creates and adds a rule to sum over the col at col_index from
@@ -725,13 +729,13 @@ class TableStyleSheet:
         pre:
             start_row >= 0
             end_row > start_row
-        """        
-        cell_list = ['%d_%d'%(index, col_index) for index in range(start_row,
-                                                                   end_row + 1)]
+        """
+        cell_list = ['%d_%d' % (index, col_index) for index in range(start_row,
+                                                                     end_row + 1)]
         rule = '%d_%d=' % dest_cell + '+'.join(cell_list)
         self.add_rule(rule)
-        
-    
+
+
     def add_colavg_rule(self, dest_cell, col_index, start_row, end_row):
         """Creates and adds a rule to make the col average (from start_row
         to end_row)
@@ -741,12 +745,11 @@ class TableStyleSheet:
             start_row >= 0
             end_row > start_row
         """
-        cell_list = ['%d_%d'%(index, col_index) for index in range(start_row,
-                                                                   end_row + 1)]
+        cell_list = ['%d_%d' % (index, col_index) for index in range(start_row,
+                                                                     end_row + 1)]
         num = (end_row - start_row + 1)
-        rule = '%d_%d=' % dest_cell + '('+'+'.join(cell_list)+')/%f'%num
+        rule = '%d_%d=' % dest_cell + '(' + '+'.join(cell_list) + ')/%f' % num
         self.add_rule(rule)
-
 
 
 class TableCellRenderer:
@@ -770,10 +773,10 @@ class TableCellRenderer:
         row_index, col_index = cell_coord
         cell_value = table.data[row_index][col_index]
         final_content = self._make_cell_content(cell_value,
-                                                table_style, col_index  +1)
+                                                table_style, col_index + 1)
         return self._render_cell_content(final_content,
                                          table_style, col_index + 1)
-        
+
 
     def render_row_cell(self, row_name, table, table_style):
         """Renders the cell for 'row_id' row
@@ -787,9 +790,8 @@ class TableCellRenderer:
         """
         cell_value = col_name.encode('iso-8859-1')
         col_index = table.col_names.index(col_name)
-        return self._render_cell_content(cell_value, table_style, col_index +1)
+        return self._render_cell_content(cell_value, table_style, col_index + 1)
 
-    
 
     def _render_cell_content(self, content, table_style, col_index):
         """Makes the appropriate rendering for this cell content.
@@ -800,7 +802,7 @@ class TableCellRenderer:
         """
         return content
 
-    
+
     def _make_cell_content(self, cell_content, table_style, col_index):
         """Makes the cell content (adds decoration data, like units for
         example)
@@ -812,7 +814,7 @@ class TableCellRenderer:
             replacement_char = 0
         if replacement_char and final_content == 0:
             return replacement_char
-        
+
         try:
             units_on = self.properties['units']
             if units_on:
@@ -820,17 +822,16 @@ class TableCellRenderer:
                     cell_content, table_style, col_index)
         except KeyError:
             pass
-        
+
         return final_content
-        
-        
+
+
     def _add_unit(self, cell_content, table_style, col_index):
         """Adds unit to the cell_content if needed
         """
         unit = table_style.get_unit_by_index(col_index)
         return str(cell_content) + " " + unit
-        
-        
+
 
 class DocbookRenderer(TableCellRenderer):
     """Defines how to render a cell for a docboook table
@@ -842,8 +843,8 @@ class DocbookRenderer(TableCellRenderer):
         size = table_style.get_size_by_index(col_index)
         return '<colspec colname="c%d" colwidth="%s"/>\n' % \
                (col_index, size)
-    
-        
+
+
     def _render_cell_content(self, cell_content, table_style, col_index):
         """Makes the appropriate rendering for this cell content.
         Rendering properties will be searched using the
@@ -863,14 +864,14 @@ class DocbookRenderer(TableCellRenderer):
 class TableWriter:
     """A class to write tables
     """
-    
+
     def __init__(self, stream, table, style, **properties):
         self._stream = stream
         self.style = style or TableStyle(table)
         self._table = table
         self.properties = properties
         self.renderer = None
-        
+
 
     def set_style(self, style):
         """sets the table's associated style
@@ -882,19 +883,18 @@ class TableWriter:
         """sets the way to render cell
         """
         self.renderer = renderer
-    
-        
+
+
     def update_properties(self, **properties):
         """Updates writer's properties (for cell rendering)
         """
         self.properties.update(properties)
 
 
-    def write_table(self, title = ""):
+    def write_table(self, title=""):
         """Writes the table
         """
         raise NotImplementedError("write_table must be implemented !")
-        
 
 
 class DocbookTableWriter(TableWriter):
@@ -905,10 +905,10 @@ class DocbookTableWriter(TableWriter):
         """Writes col headers
         """
         # Define col_headers (colstpec elements)
-        for col_index in range(len(self._table.col_names)+1):
+        for col_index in range(len(self._table.col_names) + 1):
             self._stream.write(self.renderer.define_col_header(col_index,
-                                                              self.style))
-        
+                                                               self.style))
+
         self._stream.write("<thead>\n<row>\n")
         # XXX FIXME : write an empty entry <=> the first (__row_column) column
         self._stream.write('<entry></entry>\n')
@@ -916,7 +916,7 @@ class DocbookTableWriter(TableWriter):
             self._stream.write(self.renderer.render_col_cell(
                 col_name, self._table,
                 self.style))
-            
+
         self._stream.write("</row>\n</thead>\n")
 
 
@@ -924,35 +924,35 @@ class DocbookTableWriter(TableWriter):
         """Writes the table body
         """
         self._stream.write('<tbody>\n')
-        
+
         for row_index, row in enumerate(self._table.data):
             self._stream.write('<row>\n')
             row_name = self._table.row_names[row_index]
             # Write the first entry (row_name)
             self._stream.write(self.renderer.render_row_cell(row_name,
-                                                            self._table,
-                                                            self.style))
-            
+                                                             self._table,
+                                                             self.style))
+
             for col_index, cell in enumerate(row):
                 self._stream.write(self.renderer.render_cell(
                     (row_index, col_index),
                     self._table, self.style))
-                
+
             self._stream.write('</row>\n')
-            
+
         self._stream.write('</tbody>\n')
 
 
-    def write_table(self, title = ""):
+    def write_table(self, title=""):
         """Writes the table
         """
-        self._stream.write('<table>\n<title>%s></title>\n'%(title))
+        self._stream.write('<table>\n<title>%s></title>\n' % (title))
         self._stream.write(
-            '<tgroup cols="%d" align="left" colsep="1" rowsep="1">\n'%
-            (len(self._table.col_names)+1))
+            '<tgroup cols="%d" align="left" colsep="1" rowsep="1">\n' %
+            (len(self._table.col_names) + 1))
         self._write_headers()
         self._write_body()
-        
+
         self._stream.write('</tgroup>\n</table>\n')
 
     

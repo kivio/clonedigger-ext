@@ -1,5 +1,5 @@
 #    Copyright 2008 Peter Bulychev
-#	 http://clonedigger.sourceforge.net
+#        http://clonedigger.sourceforge.net
 #
 #    This file is part of Clone Digger.
 #
@@ -18,10 +18,20 @@
 
 # Abstract Syntax Tree suppliers
 abstract_syntax_tree_suppliers = {}
-import pdb
 
 import python_compiler
+
 abstract_syntax_tree_suppliers['python'] = python_compiler.PythonCompilerSourceFile
 
 import java_antlr
+
 abstract_syntax_tree_suppliers['java'] = java_antlr.JavaANTLRSourceFile
+
+import lua_antlr
+
+abstract_syntax_tree_suppliers['lua'] = lua_antlr.LuaANTLRSourceFile
+
+import js_antlr
+
+abstract_syntax_tree_suppliers['javascript'] = js_antlr.JsANTLRSourceFile
+abstract_syntax_tree_suppliers['js'] = js_antlr.JsANTLRSourceFile

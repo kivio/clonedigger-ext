@@ -7,30 +7,34 @@ import CosNaming
 
 orb = None
 
+
 def get_orb():
     """
     returns a reference to the ORB.
     The first call to the method initialized the ORB
     This method is mainly used internally in the module.
     """
-    
+
     global orb
     if orb is None:
         import sys
+
         orb = CORBA.ORB_init(sys.argv, CORBA.ORB_ID)
     return orb
+
 
 def get_root_context():
     """
     returns a reference to the NameService object.
     This method is mainly used internally in the module.
     """
-    
+
     orb = get_orb()
     nss = orb.resolve_initial_references("NameService")
     rootContext = nss._narrow(CosNaming.NamingContext)
-    assert rootContext is not None,"Failed to narrow root naming context"
+    assert rootContext is not None, "Failed to narrow root naming context"
     return rootContext
+
 
 def register_object_name(object, namepath):
     """
@@ -54,14 +58,15 @@ def register_object_name(object, namepath):
         except CosNaming.NamingContext.AlreadyBound, ex:
             context = context.resolve(name)._narrow(CosNaming.NamingContext)
             assert context is not None, \
-                   'test context exists but is not a NamingContext'
+                'test context exists but is not a NamingContext'
 
-    id,kind = namepath[-1]
+    id, kind = namepath[-1]
     name = [CosNaming.NameComponent(id, kind)]
     try:
         context.bind(name, object._this())
     except CosNaming.NamingContext.AlreadyBound, ex:
         context.rebind(name, object._this())
+
 
 def activate_POA():
     """
@@ -74,6 +79,7 @@ def activate_POA():
     poaManager = poa._get_the_POAManager()
     poaManager.activate()
 
+
 def run_orb():
     """
     Enters the ORB mainloop on the server.
@@ -81,12 +87,14 @@ def run_orb():
     """
     get_orb().run()
 
+
 def get_object_reference(url):
     """
     Resolves a corbaname URL to an object proxy.
     See register_object_name() for examples URLs
     """
     return get_orb().string_to_object(url)
+
 
 def get_object_string(host, namepath):
     """given an host name and a name path as described in register_object_name,

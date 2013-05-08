@@ -22,17 +22,19 @@ import symbol
 import token
 from types import TupleType
 
+
 def debuild(ast_tuple):
     """
     reverse ast_tuple to string
     """
     if type(ast_tuple[1]) is TupleType:
         result = ''
-        for child in ast_tuple[1:]: 
+        for child in ast_tuple[1:]:
             result = '%s%s' % (result, debuild(child))
         return result
     else:
         return ast_tuple[1]
+
 
 def clean(ast_tuple):
     """
@@ -51,6 +53,7 @@ def clean(ast_tuple):
         last = couple[0]
     return result
 
+
 def _clean(ast_tuple):
     """ transform the ast into as list of tokens (i.e. final elements)
     """
@@ -61,19 +64,21 @@ def _clean(ast_tuple):
         return v
     else:
         return [list(ast_tuple[:2])]
-    
+
+
 def cvrtr(tuple):
     """debug method returning an ast string in a readable fashion"""
     if type(tuple) is TupleType:
         try:
             try:
-                txt = 'token.'+token.tok_name[tuple[0]]
+                txt = 'token.' + token.tok_name[tuple[0]]
             except:
-                txt = 'symbol.'+symbol.sym_name[tuple[0]]
+                txt = 'symbol.' + symbol.sym_name[tuple[0]]
         except:
-            txt =  'Unknown token/symbol'
+            txt = 'Unknown token/symbol'
         return [txt] + map(cvrtr, tuple[1:])
     else:
         return tuple
+
 
 __all__ = ('debuild', 'clean', 'cvrtr')

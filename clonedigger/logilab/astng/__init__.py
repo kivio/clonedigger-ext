@@ -54,7 +54,7 @@ from clonedigger.logilab.astng._exceptions import *
 
 class InferenceContext(object):
     __slots__ = ('startingfrom', 'path', 'lookupname', 'callcontext', 'boundnode')
-    
+
     def __init__(self, node=None, path=None):
         self.startingfrom = node # XXX useful ?
         if path is None:
@@ -69,7 +69,7 @@ class InferenceContext(object):
         name = self.lookupname
         if (node, name) in self.path:
             raise StopIteration()
-        self.path.append( (node, name) )
+        self.path.append((node, name))
 
     def pop(self):
         return self.path.pop()
@@ -92,15 +92,17 @@ def unpack_infer(stmt, context=None):
         return chain(*imap(unpack_infer, stmt.nodes))
     infered = stmt.infer(context).next()
     if infered is stmt:
-        return iter( (stmt,) )
+        return iter((stmt,))
     return chain(*imap(unpack_infer, stmt.infer(context)))
+
 
 def copy_context(context):
     if context is not None:
         return context.clone()
     else:
         return InferenceContext()
-    
+
+
 def _infer_stmts(stmts, context, frame=None):
     """return an iterator on statements infered by each statement in <stmts>
     """
@@ -134,16 +136,23 @@ def _infer_stmts(stmts, context, frame=None):
 
 class Yes(object):
     """a yes object"""
+
     def __repr__(self):
         return 'YES'
+
     def __getattribute__(self, name):
         return self
+
     def __call__(self, *args, **kwargs):
         return self
+
+
 YES = Yes()
+
 
 class Proxy:
     """a simple proxy object"""
+
     def __init__(self, proxied):
         self._proxied = proxied
 
@@ -156,11 +165,13 @@ class Proxy:
 
 class InstanceMethod(Proxy):
     """a special node representing a function bound to an instance"""
+
     def __repr__(self):
         instance = self._proxied.parent.frame()
         return 'Bound method %s of %s.%s' % (self._proxied.name,
                                              instance.root().name,
                                              instance.name)
+
     __str__ = __repr__
 
     def is_bound(self):
@@ -169,6 +180,7 @@ class InstanceMethod(Proxy):
 
 class Instance(Proxy):
     """a special node representing a class instance"""
+
     def getattr(self, name, context=None, lookupclass=True):
         try:
             return self._proxied.instance_attr(name, context)
@@ -189,7 +201,7 @@ class Instance(Proxy):
             # XXX frame should be self._proxied, or not ?
             return _infer_stmts(
                 self._wrap_attr(self.getattr(name, context, lookupclass=False)),
-                                context, frame=self)
+                context, frame=self)
         except NotFoundError:
             try:
                 # fallback to class'igetattr since it has some logic to handle
@@ -197,7 +209,7 @@ class Instance(Proxy):
                 return self._wrap_attr(self._proxied.igetattr(name, context))
             except NotFoundError:
                 raise InferenceError(name)
-            
+
     def _wrap_attr(self, attrs):
         """wrap bound methods of attrs in a InstanceMethod proxies"""
         # Guess which attrs are used in inference.
@@ -206,8 +218,9 @@ class Instance(Proxy):
                 return InstanceMethod(attr)
             else:
                 return attr
+
         return imap(wrap, attrs)
-        
+
     def infer_call_result(self, caller, context=None):
         """infer what's a class instance is returning when called"""
         infered = False
@@ -221,8 +234,9 @@ class Instance(Proxy):
     def __repr__(self):
         return 'Instance of %s.%s' % (self._proxied.root().name,
                                       self._proxied.name)
+
     __str__ = __repr__
-    
+
     def callable(self):
         try:
             self._proxied.getattr('__call__')
@@ -232,18 +246,21 @@ class Instance(Proxy):
 
     def pytype(self):
         return self._proxied.qname()
-    
-class Generator(Proxy): 
+
+
+class Generator(Proxy):
     """a special node representing a generator"""
+
     def callable(self):
         return True
-    
+
     def pytype(self):
         return '__builtin__.generator'
 
 # imports #####################################################################
 
 from clonedigger.logilab.astng.manager import ASTNGManager, Project, Package
+
 MANAGER = ASTNGManager()
 
 from clonedigger.logilab.astng.nodes import *
@@ -251,6 +268,7 @@ from clonedigger.logilab.astng import nodes
 from clonedigger.logilab.astng.scoped_nodes import *
 from clonedigger.logilab.astng import inference
 from clonedigger.logilab.astng import lookup
+
 lookup._decorate(nodes)
 
 List._proxied = MANAGER.astng_from_class(list)
@@ -269,21 +287,30 @@ builtin_astng = Dict._proxied.root()
 
 Const.__bases__ += (inference.Instance,)
 Const._proxied = None
+
+
 def Const___getattr__(self, name):
     if self.value is None:
         raise AttributeError(name)
     if self._proxied is None:
         self._proxied = MANAGER.astng_from_class(self.value.__class__)
     return getattr(self._proxied, name)
+
+
 Const.__getattr__ = Const___getattr__
+
+
 def Const_getattr(self, name, context=None, lookupclass=None):
     if self.value is None:
         raise NotFoundError(name)
     if self._proxied is None:
         self._proxied = MANAGER.astng_from_class(self.value.__class__)
     return self._proxied.getattr(name, context)
+
+
 Const.getattr = Const_getattr
 Const.has_dynamic_getattr = lambda x: False
+
 
 def Const_pytype(self):
     if self.value is None:
@@ -291,4 +318,6 @@ def Const_pytype(self):
     if self._proxied is None:
         self._proxied = MANAGER.astng_from_class(self.value.__class__)
     return self._proxied.qname()
+
+
 Const.pytype = Const_pytype

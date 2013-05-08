@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> CloneDigger Report </title>
+    <script type="text/javascript">
+        function unhide(divID) {
+            var item = document.getElementById(divID);
+            if (item) {
+                item.className=(item.className=='hidden')?'unhidden':'hidden';
+            }
+        }
+    </script>
+    <style type="text/css">
+        .hidden { display: none; }
+        .unhidden { display: block; }
+        .preformatted {
+            border: 1px dashed #3c78b5;
+            font-size: 11px;
+            font-family: Courier;
+            margin: 10px;
+            line-height: 13px;
+        }
+        .preformattedHeader {
+            background-color: #f0f0f0;
+            border-bottom: 1px dashed #3c78b5;
+            padding: 3px;
+            text-align: center;
+        }
+        .preformattedContent {
+            background-color: #f0f0f0;
+            padding: 3px;
+        }
+    </style>
+</head>
+<body>
+    {{ errors }}
+    {{ save_to }}
+    {{ describe }}
+    {{ timeit }}
+    {% for clone in clones %}
+        {{ clone }} <br/>
+    {% endfor %}
+    {{ mark_reports }}
+    {{ warnings }}
+<hr>
+Clone Digger is aimed to find software clones in Python and Java programs. It is provided under the GPL license and can be downloaded from the site <a href="http://clonedigger.sourceforge.net">http://clonedigger.sourceforge.net</a>
+</body>
+</html>

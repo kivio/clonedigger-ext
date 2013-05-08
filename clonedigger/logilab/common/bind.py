@@ -19,6 +19,7 @@
 """
 
 from warnings import warn
+
 warn('bind module is deprecated and will disappear in a near release',
      DeprecationWarning, stacklevel=1)
 
@@ -37,6 +38,7 @@ LOAD_CONST = 100
 EXTENDED_ARG = 143
 STORE_GLOBAL = 97
 
+
 def bind_code(co, globals):
     """
     Take a code object and a dictionnary and returns a new code object where
@@ -45,7 +47,7 @@ def bind_code(co, globals):
     """
     consts = list(co.co_consts)
     assigned = {}
-    
+
     code = co.co_code
     new_code = ""
     n = len(code)
@@ -55,7 +57,7 @@ def bind_code(co, globals):
         op = ord(c)
         i += 1
         if op >= HAVE_ARGUMENT:
-            oparg = ord(code[i]) + ord(code[i+1]) * 256
+            oparg = ord(code[i]) + ord(code[i + 1]) * 256
             i += 2
         else:
             oparg = None
@@ -72,8 +74,8 @@ def bind_code(co, globals):
         new_code += chr(op)
         if oparg is not None:
             new_code += chr(oparg & 255)
-            new_code += chr( (oparg>>8) & 255 )
-            
+            new_code += chr((oparg >> 8) & 255)
+
     return make_code(co.co_argcount,
                      co.co_nlocals,
                      co.co_stacksize,
@@ -85,7 +87,7 @@ def bind_code(co, globals):
                      co.co_filename,
                      co.co_name,
                      co.co_firstlineno,
-                     co.co_lnotab )
+                     co.co_lnotab)
 
 
 def bind(f, globals):
@@ -95,13 +97,14 @@ def bind(f, globals):
     defaults = f.func_defaults or ()
     return make_function(newcode, f.func_globals, f.func_name, defaults)
 
+
 if type(__builtins__) == dict:
     builtins = __builtins__
 else:
     builtins = __builtins__.__dict__
-    
-bind_code_opt = bind(bind_code, builtins )
-bind_code_opt = bind(bind_code_opt, globals() )
+
+bind_code_opt = bind(bind_code, builtins)
+bind_code_opt = bind(bind_code_opt, globals())
 
 
 def optimize_module(m, global_consts):
@@ -118,8 +121,6 @@ def optimize_module(m, global_consts):
             if d:
                 f = bind(f, d)
             m.__dict__[name] = f
-            
-
 
 
 def analyze_code(co, globals, consts_dict, consts_list):
@@ -142,13 +143,13 @@ def analyze_code(co, globals, consts_dict, consts_list):
         op = ord(c)
         i += 1
         if op >= HAVE_ARGUMENT:
-            oparg = ord(code[i]) + ord(code[i+1])*256 + extended_arg
+            oparg = ord(code[i]) + ord(code[i + 1]) * 256 + extended_arg
             extended_arg = 0
             i += 2
         else:
             oparg = None
         if op == EXTENDED_ARG:
-            extended_arg = oparg*65536L
+            extended_arg = oparg * 65536L
 
         if op == LOAD_GLOBAL:
             name = co.co_names[oparg]
@@ -163,6 +164,7 @@ def analyze_code(co, globals, consts_dict, consts_list):
             if globals.has_key(name):
                 modified_globals.append(name)
     return modified_globals
+
 
 def rewrite_code(co, consts_dict, consts_tuple):
     """Take a code object and a dictionnary and returns a
@@ -180,13 +182,13 @@ def rewrite_code(co, consts_dict, consts_tuple):
         i += 1
         extended_arg = 0
         if op >= HAVE_ARGUMENT:
-            oparg = ord(code[i]) + ord(code[i+1])*256+extended_arg
+            oparg = ord(code[i]) + ord(code[i + 1]) * 256 + extended_arg
             extended_arg = 0
             i += 2
         else:
             oparg = None
         if op == EXTENDED_ARG:
-            extended_arg = oparg*65536L
+            extended_arg = oparg * 65536L
         elif op == LOAD_GLOBAL:
             name = co.co_names[oparg]
             k = consts_dict.get(name)
@@ -199,8 +201,8 @@ def rewrite_code(co, consts_dict, consts_tuple):
         new_code += chr(op)
         if oparg is not None:
             new_code += chr(oparg & 255)
-            new_code += chr( (oparg>>8) & 255 )
-            
+            new_code += chr((oparg >> 8) & 255)
+
     return make_code(co.co_argcount,
                      co.co_nlocals,
                      co.co_stacksize,
@@ -212,7 +214,8 @@ def rewrite_code(co, consts_dict, consts_tuple):
                      co.co_filename,
                      co.co_name,
                      co.co_firstlineno,
-                     co.co_lnotab )
+                     co.co_lnotab)
+
 
 def optimize_module_2(m, globals_consts, bind_builtins=1):
     if not inspect.ismodule(m):
@@ -241,32 +244,34 @@ def optimize_module_2(m, globals_consts, bind_builtins=1):
         defaults = f.func_defaults or ()
         m.__dict__[name] = make_function(newcode, f.func_globals, f.func_name,
                                          defaults)
-        
+
 
 def run_bench(n):
     from time import time
+
     t = time()
     g = globals()
     for i in range(n):
         test = bind(bind_code, g)
-    t1 = time()-t
-    bind2 = bind(bind, {'bind_code':bind_code_opt})
+    t1 = time() - t
+    bind2 = bind(bind, {'bind_code': bind_code_opt})
     t = time()
     for i in range(n):
-        test=bind2(bind_code, g)
-    t2 = time()-t
+        test = bind2(bind_code, g)
+    t2 = time() - t
     print "1 regular version", t1
     print "2 optimized version", t2
-    print "ratio (1-2)/1 : %f %%" % (100.*(t1-t2)/t1)
-    
+    print "ratio (1-2)/1 : %f %%" % (100. * (t1 - t2) / t1)
+
 
 def test_pystone():
     from test import pystone
+
     for _ in range(5):
         pystone.main()
-    optimize_module(pystone, ('TRUE','FALSE','Proc0','Proc1','Proc2','Proc3',
-                              'Proc4','Proc5','Proc6','Proc7','Proc8','Func1',
-                             ' Func2','Func3'))
+    optimize_module(pystone, ('TRUE', 'FALSE', 'Proc0', 'Proc1', 'Proc2', 'Proc3',
+                              'Proc4', 'Proc5', 'Proc6', 'Proc7', 'Proc8', 'Func1',
+                              ' Func2', 'Func3'))
     optimize_module(pystone, builtins.keys())
     for _ in range(5):
         pystone.main()
